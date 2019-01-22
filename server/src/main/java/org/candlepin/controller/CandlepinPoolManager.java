@@ -73,7 +73,7 @@ import org.candlepin.util.Util;
 import org.candlepin.util.Traceable;
 import org.candlepin.util.TraceableParam;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
 
@@ -2154,9 +2154,19 @@ public class CandlepinPoolManager implements PoolManager {
             // Fetch entitlements (uggh).
             // TODO: Stop doing this. Update the bits below to not use the entities directly and
             // do the updates via queries.
-            Collection<Entitlement> entitlements = !entitlementIds.isEmpty() ?
-                this.entitlementCurator.listAllByIds(entitlementIds).list() :
-                Collections.<Entitlement>emptySet();
+            // Impl note: we have to fetch these in blocks to guard against the case where we're
+            // attempting to fetch more entitlements than the parameter limit allows (~32k).
+            Set<Entitlement> entitlements = new HashSet<>();
+
+            if (!entitlementIds.isEmpty()) {
+                log.debug("IN BLOCK SIZE: {}", this.entitlementCurator.getInBlockSize());
+                Iterable<List<String>> blocks =
+                    Iterables.partition(entitlementIds, this.entitlementCurator.getInBlockSize());
+
+                for (List<String> block : blocks) {
+                    entitlements.addAll(this.entitlementCurator.listAllByIds(block).list());
+                }
+            }
 
             // Mark remaining dependent entitlements dirty for this consumer
             this.entitlementCurator.markDependentEntitlementsDirty(entitlementIds);
@@ -2297,7 +2307,7 @@ public class CandlepinPoolManager implements PoolManager {
                 log.info("Recomputing status for {} consumers", consumers.size());
 
                 // Recalculate status for affected consumers
-                for (List<String> subList : Lists.partition(consumers, 1000)) {
+                for (List<String> subList : Iterables.partition(consumers, 1000)) {
                     for (Consumer consumer : this.consumerCurator.getConsumers(subList).list()) {
                         this.complianceRules.getStatus(consumer);
                         this.consumerCurator.detach(consumer);
