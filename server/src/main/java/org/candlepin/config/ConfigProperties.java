@@ -127,6 +127,7 @@ public class ConfigProperties {
     public static final String SSL_AUTHENTICATION = "candlepin.auth.ssl.enable";
     public static final String OAUTH_AUTHENTICATION = "candlepin.auth.oauth.enable";
     public static final String BASIC_AUTHENTICATION = "candlepin.auth.basic.enable";
+    public static final String KEYCLOAK_AUTHENTICATION = "candlepin.auth.keycloak.enable";
 
     // AMQP stuff
     public static final String AMQP_INTEGRATION_ENABLED = "candlepin.amqp.enable";
@@ -275,6 +276,7 @@ public class ConfigProperties {
     public static final String IDENTITY_CERT_EXPIRY_THRESHOLD = "candlepin.identityCert.expiry.threshold";
 
     public static final String SWAGGER_ENABLED = "candlepin.swagger.enabled";
+    public static final String TOKEN_ENABLED = "candlepin.token.enabled";
 
     public static final Map<String, String> DEFAULT_PROPERTIES = new HashMap<String, String>() {
         private static final long serialVersionUID = 1L;
@@ -330,6 +332,7 @@ public class ConfigProperties {
             this.put(TRUSTED_AUTHENTICATION, "false");
             this.put(SSL_AUTHENTICATION, "true");
             this.put(OAUTH_AUTHENTICATION, "false");
+            this.put(KEYCLOAK_AUTHENTICATION, "false");
             this.put(BASIC_AUTHENTICATION, "true");
             this.put(AUTH_OVER_HTTP, "false");
             // By default, environments should be hidden so clients do not need to
@@ -409,6 +412,7 @@ public class ConfigProperties {
             this.put(PINSETTER_ASYNC_JOB_TIMEOUT, Integer.toString(1200));
             this.put(PINSETTER_MAX_RETRIES, Integer.toString(PINSETTER_MAX_RETRIES_DEFAULT));
             this.put(SWAGGER_ENABLED, Boolean.toString(true));
+            this.put(TOKEN_ENABLED, Boolean.toString(true));
 
             // ManifestCleanerJob config
             // Max Age: 24 hours

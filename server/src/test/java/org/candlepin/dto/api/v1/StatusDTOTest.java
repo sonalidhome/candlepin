@@ -57,6 +57,9 @@ public class StatusDTOTest extends AbstractDTOTest<StatusDTO> {
         this.values.put("TimeUTC", new Date());
         this.values.put("RulesSource", "rules-source");
         this.values.put("Capabilities", capabilities);
+        this.values.put("Resource", "candlepin");
+        this.values.put("Realm", "rhsso");
+        this.values.put("AuthUrl", "https://demoredhat.com");
     }
 
     /**

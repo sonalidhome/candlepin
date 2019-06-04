@@ -14,6 +14,10 @@
  */
 package org.candlepin.resource;
 
+import org.json.simple.parser.JSONParser;
+
+import org.json.simple.JSONObject;
+
 import org.candlepin.cache.CandlepinCache;
 import org.candlepin.cache.StatusCache;
 import org.candlepin.common.auth.SecurityHole;
@@ -30,22 +34,23 @@ import org.candlepin.policy.js.JsRunnerProvider;
 
 import com.google.inject.Inject;
 
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-
-
 
 /**
  * Status Resource
@@ -71,10 +76,12 @@ public class StatusResource {
     private JsRunnerProvider jsProvider;
     private CandlepinCache candlepinCache;
     private ModeManager modeManager;
-
+    private String resource;
+    private String authUrl;
+    private String realm;
     @Inject
     public StatusResource(RulesCurator rulesCurator, Configuration config, JsRunnerProvider jsProvider,
-        CandlepinCache candlepinCache, ModeManager modeManager) {
+        CandlepinCache candlepinCache, ModeManager modeManager) throws IOException, ParseException {
         this.modeManager = modeManager;
         this.rulesCurator = rulesCurator;
         this.candlepinCache = candlepinCache;
@@ -85,6 +92,26 @@ public class StatusResource {
         if (config == null || !config.getBoolean(ConfigProperties.STANDALONE)) {
             standalone = false;
         }
+
+        try (FileReader reader = new FileReader("/etc/candlepin/keycloak.json")) {
+            //Read JSON file
+            JSONParser jsonParser = new JSONParser();
+            JSONObject jsonobj = (JSONObject) jsonParser.parse(reader);
+            realm = (String) jsonobj.get("realm");
+            authUrl = (String) jsonobj.get("auth-server-url");
+            resource = (String) jsonobj.get("resource");
+
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        catch (ParseException e) {
+            e.printStackTrace();
+        }
+
         this.jsProvider = jsProvider;
     }
 
@@ -161,7 +188,10 @@ public class StatusResource {
             .setModeReason(modeChangeReason != null ? modeChangeReason.toString() : null)
             .setModeChangeTime(modeChange.getChangeTime())
             .setManagerCapabilities(caps)
-            .setTimeUTC(new Date());
+            .setTimeUTC(new Date())
+            .setResource(resource)
+            .setAuthUrl(authUrl)
+            .setRealm(realm);
 
         statusCache.setStatus(status);
 

@@ -72,6 +72,12 @@ public class StatusDTO extends CandlepinDTO<StatusDTO> {
 
     private Date timeUTC;
 
+    private String realm;
+
+    private String authUrl;
+
+    private String resource;
+
     private String rulesSource;
 
     @ApiModelProperty(example = "[ \"cores\", \"ram\", \"instance_multiplier\" ]")
@@ -170,6 +176,34 @@ public class StatusDTO extends CandlepinDTO<StatusDTO> {
 
     public Set<String> getManagerCapabilities() {
         return this.capabilities != null ? new SetView(this.capabilities) : null;
+    }
+
+    public String getResource() {
+        return resource;
+    }
+
+    public StatusDTO setResource(String resource) {
+        this.resource = resource;
+        return this;
+
+    }
+
+    public String getAuthUrl() {
+        return authUrl;
+    }
+
+    public StatusDTO setAuthUrl(String authUrl) {
+        this.authUrl = authUrl;
+        return this;
+    }
+
+    public String getRealm() {
+        return realm;
+    }
+
+    public StatusDTO setRealm(String realm) {
+        this.realm = realm;
+        return this;
     }
 
     /**
@@ -294,7 +328,10 @@ public class StatusDTO extends CandlepinDTO<StatusDTO> {
                 .append(this.getRelease(), that.getRelease())
                 .append(this.getStandalone(), that.getStandalone())
                 .append(this.getTimeUTC(), that.getTimeUTC())
-                .append(this.getManagerCapabilities(), that.getManagerCapabilities());
+                .append(this.getManagerCapabilities(), that.getManagerCapabilities())
+                .append(this.getRealm(), that.getRealm())
+                .append(this.getAuthUrl(), that.getAuthUrl())
+                .append(this.getResource(), that.getResource());
 
             return builder.isEquals();
         }
@@ -318,7 +355,10 @@ public class StatusDTO extends CandlepinDTO<StatusDTO> {
             .append(this.getRelease())
             .append(this.getStandalone())
             .append(this.getTimeUTC())
-            .append(this.getManagerCapabilities());
+            .append(this.getManagerCapabilities())
+            .append(this.getRealm())
+            .append(this.getAuthUrl())
+            .append(this.getResource());
 
         return builder.toHashCode();
     }
@@ -361,6 +401,9 @@ public class StatusDTO extends CandlepinDTO<StatusDTO> {
         this.setStandalone(source.getStandalone());
         this.setTimeUTC(source.getTimeUTC());
         this.setManagerCapabilities(source.getManagerCapabilities());
+        this.setAuthUrl(source.getAuthUrl());
+        this.setRealm(source.getRealm());
+        this.setResource(source.getResource());
 
         return this;
     }
