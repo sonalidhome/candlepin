@@ -277,7 +277,10 @@ public class ConfigProperties {
 
     public static final String SWAGGER_ENABLED = "candlepin.swagger.enabled";
     public static final String TOKEN_ENABLED = "candlepin.token.enabled";
-
+    /**
+     * Keycloak Filepath needed for authentication
+     */
+    public static final String KEYCLOAK_FILEPATH = "/etc/candlepin/keycloak.json";
     public static final Map<String, String> DEFAULT_PROPERTIES = new HashMap<String, String>() {
         private static final long serialVersionUID = 1L;
 

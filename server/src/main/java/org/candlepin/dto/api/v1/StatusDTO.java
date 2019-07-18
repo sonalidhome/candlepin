@@ -174,10 +174,6 @@ public class StatusDTO extends CandlepinDTO<StatusDTO> {
         return this;
     }
 
-    public Set<String> getManagerCapabilities() {
-        return this.capabilities != null ? new SetView(this.capabilities) : null;
-    }
-
     public String getResource() {
         return resource;
     }
@@ -185,7 +181,6 @@ public class StatusDTO extends CandlepinDTO<StatusDTO> {
     public StatusDTO setResource(String resource) {
         this.resource = resource;
         return this;
-
     }
 
     public String getAuthUrl() {
@@ -204,6 +199,10 @@ public class StatusDTO extends CandlepinDTO<StatusDTO> {
     public StatusDTO setRealm(String realm) {
         this.realm = realm;
         return this;
+    }
+
+    public Set<String> getManagerCapabilities() {
+        return this.capabilities != null ? new SetView(this.capabilities) : null;
     }
 
     /**

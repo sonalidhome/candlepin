@@ -156,9 +156,7 @@ dependencies {
     compile 'org.bouncycastle:bcprov-jdk15on:1.60'
     compile group: 'org.keycloak', name: 'keycloak-jaxrs-oauth-client', version: '6.0.1'
     compile group: 'org.keycloak', name: 'keycloak-authz-client', version: '6.0.1'
-    compile group: 'org.json', name: 'json', version: '20090211'
-    compile 'com.googlecode.json-simple:json-simple:1.1.1'
-    
+
     // Listed twice due to design decision by the Gradle team: https://discuss.gradle.org/t/compileonly-dependencies-are-not-available-in-tests/15366/3
     compileOnly libraries.javax_servlet
     testCompile libraries.javax_servlet

@@ -14,10 +14,8 @@
  */
 package org.candlepin.resource;
 
-import org.json.simple.parser.JSONParser;
-
-import org.json.simple.JSONObject;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.candlepin.cache.CandlepinCache;
 import org.candlepin.cache.StatusCache;
 import org.candlepin.common.auth.SecurityHole;
@@ -34,13 +32,10 @@ import org.candlepin.policy.js.JsRunnerProvider;
 
 import com.google.inject.Inject;
 
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -69,9 +64,7 @@ public class StatusResource {
      * The current git release
      */
     private String release = "Unknown";
-
     private boolean standalone = true;
-
     private RulesCurator rulesCurator;
     private JsRunnerProvider jsProvider;
     private CandlepinCache candlepinCache;
@@ -79,9 +72,10 @@ public class StatusResource {
     private String resource;
     private String authUrl;
     private String realm;
+
     @Inject
     public StatusResource(RulesCurator rulesCurator, Configuration config, JsRunnerProvider jsProvider,
-        CandlepinCache candlepinCache, ModeManager modeManager) throws IOException, ParseException {
+        CandlepinCache candlepinCache, ModeManager modeManager) {
         this.modeManager = modeManager;
         this.rulesCurator = rulesCurator;
         this.candlepinCache = candlepinCache;
@@ -93,23 +87,19 @@ public class StatusResource {
             standalone = false;
         }
 
-        try (FileReader reader = new FileReader("/etc/candlepin/keycloak.json")) {
+        try (FileReader reader = new FileReader(ConfigProperties.KEYCLOAK_FILEPATH)) {
             //Read JSON file
-            JSONParser jsonParser = new JSONParser();
-            JSONObject jsonobj = (JSONObject) jsonParser.parse(reader);
-            realm = (String) jsonobj.get("realm");
-            authUrl = (String) jsonobj.get("auth-server-url");
-            resource = (String) jsonobj.get("resource");
-
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(reader);
+            realm = rootNode.get("realm").asText();
+            authUrl = rootNode.get("auth-server-url").asText();
+            resource = rootNode.get("resource").asText();
         }
         catch (FileNotFoundException e) {
-            e.printStackTrace();
+            log.error("Keycloak.json file not found", e);
         }
         catch (IOException e) {
-            e.printStackTrace();
-        }
-        catch (ParseException e) {
-            e.printStackTrace();
+            log.error("IOException while using Keycloak.json", e);
         }
 
         this.jsProvider = jsProvider;

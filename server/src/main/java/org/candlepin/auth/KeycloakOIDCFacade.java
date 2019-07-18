@@ -23,18 +23,18 @@ import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.adapters.spi.LogoutError;
 import org.keycloak.common.util.HostUtils;
 
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.security.cert.X509Certificate;
-
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+
 /**
  * KeycloakOIDCFacade for KeycloakAuth
  */
-
 public class KeycloakOIDCFacade implements HttpFacade {
 
     protected final HttpRequest requestContext;
@@ -45,17 +45,17 @@ public class KeycloakOIDCFacade implements HttpFacade {
     public KeycloakOIDCFacade(HttpRequest containerRequestContext) {
         this.requestContext = containerRequestContext;
     }
+
     /**
      * RequestFacade for Keycloak Requests
      */
-
     protected class RequestFacade implements OIDCHttpFacade.Request {
 
         private InputStream inputStream;
 
         @Override
         public String getFirstParam(String param) {
-            throw new RuntimeException("NOT IMPLEMENTED");
+            throw new UnsupportedOperationException("NOT IMPLEMENTED");
         }
 
         @Override
@@ -78,7 +78,6 @@ public class KeycloakOIDCFacade implements HttpFacade {
             return false;
         }
 
-
         @Override
         public String getQueryParamValue(String param) {
             MultivaluedMap<String, String> queryParams = requestContext.getUri().getQueryParameters();
@@ -90,7 +89,7 @@ public class KeycloakOIDCFacade implements HttpFacade {
 
         @Override
         public Cookie getCookie(String cookieName) {
-            throw new IllegalStateException("Not supported yet");
+            throw new UnsupportedOperationException("Not supported yet");
 
         }
 
@@ -104,7 +103,6 @@ public class KeycloakOIDCFacade implements HttpFacade {
         @Override
         public List<String> getHeaders(String name) {
             MultivaluedMap<String, String> headers = requestContext.getMutableHeaders();
-            System.out.println(headers.get(name));
             return headers.get(name);
 
         }
@@ -116,8 +114,8 @@ public class KeycloakOIDCFacade implements HttpFacade {
 
         @Override
         public InputStream getInputStream(boolean buffered) {
-            if (inputStream != null) {
-                return inputStream;
+            if (this.inputStream != null) {
+                return this.inputStream;
             }
             InputStream inputStream = requestContext.getInputStream();
             return inputStream;
@@ -131,19 +129,21 @@ public class KeycloakOIDCFacade implements HttpFacade {
 
         @Override
         public void setError(AuthenticationError error) {
+            // intentionally left empty
         }
 
         @Override
         public void setError(LogoutError error) {
-
+            // intentionally left empty
         }
     }
+
     /**
      * ResponseFacade for Keycloak Responses
      */
     protected class ResponseFacade implements OIDCHttpFacade.Response {
 
-        private javax.ws.rs.core.Response.ResponseBuilder responseBuilder =
+        private ResponseBuilder responseBuilder =
             javax.ws.rs.core.Response.status(204);
 
         @Override
@@ -164,37 +164,36 @@ public class KeycloakOIDCFacade implements HttpFacade {
         @Override
         public void resetCookie(String name, String path) {
             // For now doesn't need to be supported
-            throw new IllegalStateException("Not supported yet");
+            throw new UnsupportedOperationException("Not supported yet");
         }
 
         @Override
         public void setCookie(String name, String value, String path, String domain, int maxAge,
             boolean secure, boolean httpOnly) {
             // For now doesn't need to be supported
-            throw new IllegalStateException("Not supported yet");
+            throw new UnsupportedOperationException("Not supported yet");
         }
 
         @Override
         public OutputStream getOutputStream() {
             // For now doesn't need to be supported
-            throw new IllegalStateException("Not supported yet");
+            throw new UnsupportedOperationException("Not supported yet");
         }
 
         @Override
         public void sendError(int code) {
-            throw new CandlepinException(javax.ws.rs.core.Response.Status.fromStatusCode(code),
+            throw new CandlepinException(Status.fromStatusCode(code),
                 "Error during authentication");
         }
 
         @Override
         public void sendError(int code, String message) {
-            throw new CandlepinException(javax.ws.rs.core.Response.Status.fromStatusCode(code), message);
-
+            throw new CandlepinException(Status.fromStatusCode(code), message);
         }
 
         @Override
         public void end() {
-
+            // intentionally left empty
         }
     }
 
@@ -210,10 +209,10 @@ public class KeycloakOIDCFacade implements HttpFacade {
 
     @Override
     public X509Certificate[] getCertificateChain() {
-        throw new IllegalStateException("Not supported yet");
+        throw new UnsupportedOperationException("Not supported yet");
     }
 
     public boolean isResponseFinished() {
-        return responseFinished;
+        return true;
     }
 }

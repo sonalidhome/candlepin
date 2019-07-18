@@ -49,7 +49,8 @@ public class CandlepinFilterModule extends ServletModule {
          * A negative lookeahead regex that makes sure that we can serve
          * static content at docs/
          */
-        if (config.getBoolean(ConfigProperties.TOKEN_ENABLED)) {
+        if (config.getBoolean(ConfigProperties.TOKEN_ENABLED) &&
+            config.getBoolean(ConfigProperties.SWAGGER_ENABLED)) {
             //No docs and no token
             regex = "^(?!/docs|/token).*";
             filterRegex(regex).through(CandlepinScopeFilter.class);
@@ -57,7 +58,7 @@ public class CandlepinFilterModule extends ServletModule {
             filterRegex(regex).through(LoggingFilter.class, loggingFilterConfig);
             filterRegex(regex).through(EventFilter.class);
         }
-        else if (config.getBoolean(ConfigProperties.TOKEN_ENABLED)) {
+        else if (config.getBoolean(ConfigProperties.SWAGGER_ENABLED)) {
             //No docs
             regex = "^(?!/docs).*";
             filterRegex(regex).through(CandlepinScopeFilter.class);
@@ -65,11 +66,11 @@ public class CandlepinFilterModule extends ServletModule {
             filterRegex(regex).through(LoggingFilter.class, loggingFilterConfig);
             filterRegex(regex).through(EventFilter.class);
         }
-        else {
+        else if (config.getBoolean(ConfigProperties.TOKEN_ENABLED)) {
             //No token
             regex = "^(?!/token).*";
         }
-
+        
         serveRegex(regex).with(HttpServletDispatcher.class);
     }
 }
