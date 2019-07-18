@@ -70,7 +70,6 @@ public class CandlepinFilterModule extends ServletModule {
             //No token
             regex = "^(?!/token).*";
         }
-        
         serveRegex(regex).with(HttpServletDispatcher.class);
     }
 }
