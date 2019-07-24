@@ -40,7 +40,6 @@ public class KeycloakOIDCFacade implements HttpFacade {
     protected final HttpRequest requestContext;
     protected final RequestFacade requestFacade = new RequestFacade();
     protected final ResponseFacade responseFacade = new ResponseFacade();
-    protected boolean responseFinished;
 
     public KeycloakOIDCFacade(HttpRequest containerRequestContext) {
         this.requestContext = containerRequestContext;
@@ -55,7 +54,7 @@ public class KeycloakOIDCFacade implements HttpFacade {
 
         @Override
         public String getFirstParam(String param) {
-            throw new UnsupportedOperationException("NOT IMPLEMENTED");
+            throw new UnsupportedOperationException("Not supported yet");
         }
 
         @Override
@@ -114,9 +113,6 @@ public class KeycloakOIDCFacade implements HttpFacade {
 
         @Override
         public InputStream getInputStream(boolean buffered) {
-            if (this.inputStream != null) {
-                return this.inputStream;
-            }
             InputStream inputStream = requestContext.getInputStream();
             return inputStream;
         }
@@ -210,9 +206,5 @@ public class KeycloakOIDCFacade implements HttpFacade {
     @Override
     public X509Certificate[] getCertificateChain() {
         throw new UnsupportedOperationException("Not supported yet");
-    }
-
-    public boolean isResponseFinished() {
-        return true;
     }
 }

@@ -16,22 +16,15 @@
 package org.candlepin.auth;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.candlepin.config.ConfigProperties;
+import org.candlepin.common.config.Configuration;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.TokenVerifier;
-import org.apache.commons.codec.binary.Base64;
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.ws.rs.core.Context;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Set;
 
 import org.candlepin.auth.permissions.PermissionFactory;
@@ -54,6 +47,9 @@ import org.keycloak.adapters.spi.KeycloakAccount;
 import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.JsonWebToken;
+import org.keycloak.representations.adapters.config.AdapterConfig;
+import org.keycloak.util.TokenUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnap.commons.i18n.I18n;
@@ -71,41 +67,21 @@ public class KeycloakAuth extends UserAuth implements AuthProvider {
     protected AdapterDeploymentContext deploymentContext;
     private AccessTokenResponse response = null;
     private KeycloakDeployment kd;
-    private String filepath = null;
     private RefreshableKeycloakSecurityContext securityContext = null;
-
-    /**
-     * Enum for Different types of Tokens
-     */
-    public enum Token {
-        BEARER,
-        REFRESH
-    }
+    private static AdapterConfig adapterConfig = null;
+    private Configuration configuration;
 
     @Inject
     public KeycloakAuth(UserServiceAdapter userServiceAdapter, Provider<I18n> i18nProvider,
-        PermissionFactory permissionFactory) {
+        PermissionFactory permissionFactory, Configuration configuration,
+        KeycloakAdapterConfiguration keycloakAdapterConfiguration) {
         super(userServiceAdapter, i18nProvider, permissionFactory);
-        createKeycloakDeploymentFrom();
+        this.configuration = configuration;
+        adapterConfig = keycloakAdapterConfiguration.getAdapterConfig();
+        kd = KeycloakDeploymentBuilder.build(adapterConfig);
+        deploymentContext = new AdapterDeploymentContext(kd);
+
     }
-
-    private void createKeycloakDeploymentFrom() {
-
-        try {
-            InputStream is = loadKeycloakConfigFile();
-            kd = KeycloakDeploymentBuilder.build(is);
-            deploymentContext = new AdapterDeploymentContext(kd);
-        }
-        catch (FileNotFoundException e) {
-            log.error("{} :File not found", filepath);
-        }
-    }
-
-    private InputStream loadKeycloakConfigFile() throws FileNotFoundException {
-        filepath = ConfigProperties.KEYCLOAK_FILEPATH;
-        return new FileInputStream(filepath);
-    }
-
 
     @Override
     public Principal getPrincipal(HttpRequest httpRequest) {
@@ -119,28 +95,17 @@ public class KeycloakAuth extends UserAuth implements AuthProvider {
                     return null;
                 }
                 else {
-                    try {
-                        Base64 base64Url = new Base64(true);
-                        String[] splitstring = authArray[1].split("\\.");
-                        String base64EncodedBody = splitstring[1];
-                        String body = new String(base64Url.decode(base64EncodedBody));
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        JsonNode rootNode = objectMapper.readTree(body);
-                        String tokenType = rootNode.get("typ").asText();
-                        Token token = Token.valueOf(tokenType.toUpperCase());
-                        switch(token) {
-                            case BEARER:
-                                handleBearerToken(httpRequest);
-                                break;
-                            case REFRESH:
-                                handleRefreshToken(httpRequest, auth);
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    catch (UnsupportedEncodingException e) {
-                        throw new UnsupportedEncodingException(i18nProvider.get().tr("Decoding Failed"));
+                    String tokenType = TokenVerifier.create(authArray[1],
+                        JsonWebToken.class).getToken().getType();
+                    switch (tokenType) {
+                        case TokenUtil.TOKEN_TYPE_BEARER:
+                            handleBearerToken(httpRequest);
+                            break;
+                        case TokenUtil.TOKEN_TYPE_REFRESH:
+                            handleRefreshToken(httpRequest, auth);
+                            break;
+                        default:
+                            break;
                     }
                 }
                 KeycloakSecurityContext keycloakSecurityContext = (KeycloakSecurityContext)

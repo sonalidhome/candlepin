@@ -14,8 +14,8 @@
  */
 package org.candlepin.resource;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.candlepin.auth.KeycloakAdapterConfiguration;
 import org.candlepin.cache.CandlepinCache;
 import org.candlepin.cache.StatusCache;
 import org.candlepin.common.auth.SecurityHole;
@@ -31,14 +31,10 @@ import org.candlepin.model.RulesCurator;
 import org.candlepin.policy.js.JsRunnerProvider;
 
 import com.google.inject.Inject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
@@ -69,13 +65,14 @@ public class StatusResource {
     private JsRunnerProvider jsProvider;
     private CandlepinCache candlepinCache;
     private ModeManager modeManager;
-    private String resource;
-    private String authUrl;
-    private String realm;
+    private String resource = null;
+    private String authUrl = null;
+    private String realm = null;
 
     @Inject
     public StatusResource(RulesCurator rulesCurator, Configuration config, JsRunnerProvider jsProvider,
-        CandlepinCache candlepinCache, ModeManager modeManager) {
+        CandlepinCache candlepinCache, ModeManager modeManager,
+        KeycloakAdapterConfiguration keycloakAdapterConfiguration) {
         this.modeManager = modeManager;
         this.rulesCurator = rulesCurator;
         this.candlepinCache = candlepinCache;
@@ -86,22 +83,11 @@ public class StatusResource {
         if (config == null || !config.getBoolean(ConfigProperties.STANDALONE)) {
             standalone = false;
         }
-
-        try (FileReader reader = new FileReader(ConfigProperties.KEYCLOAK_FILEPATH)) {
-            //Read JSON file
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(reader);
-            realm = rootNode.get("realm").asText();
-            authUrl = rootNode.get("auth-server-url").asText();
-            resource = rootNode.get("resource").asText();
+        if (keycloakAdapterConfiguration.getAdapterConfig() != null) {
+            realm = keycloakAdapterConfiguration.getAdapterConfig().getRealm();
+            authUrl = keycloakAdapterConfiguration.getAdapterConfig().getAuthServerUrl();
+            resource = keycloakAdapterConfiguration.getAdapterConfig().getResource();
         }
-        catch (FileNotFoundException e) {
-            log.error("Keycloak.json file not found", e);
-        }
-        catch (IOException e) {
-            log.error("IOException while using Keycloak.json", e);
-        }
-
         this.jsProvider = jsProvider;
     }
 

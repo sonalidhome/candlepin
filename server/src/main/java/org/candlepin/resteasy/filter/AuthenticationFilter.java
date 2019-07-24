@@ -14,6 +14,7 @@
  */
 package org.candlepin.resteasy.filter;
 
+import org.candlepin.auth.KeycloakAdapterConfiguration;
 import org.candlepin.auth.KeycloakAuth;
 import org.candlepin.auth.AuthProvider;
 import org.candlepin.common.auth.SecurityHole;
@@ -71,15 +72,18 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     private ConsumerCurator consumerCurator;
     private Injector injector;
     private Configuration config;
+    private KeycloakAdapterConfiguration keycloakAdapterConfiguration;
     private List<AuthProvider> providers = new ArrayList<>();
 
     @Inject
     public AuthenticationFilter(Configuration config,
         ConsumerCurator consumerCurator,
-        DeletedConsumerCurator deletedConsumerCurator, Injector injector) {
+        DeletedConsumerCurator deletedConsumerCurator, Injector injector,
+        KeycloakAdapterConfiguration keycloakAdapterConfiguration) {
         this.consumerCurator = consumerCurator;
         this.injector = injector;
         this.config = config;
+        this.keycloakAdapterConfiguration = keycloakAdapterConfiguration;
 
         setupAuthStrategies();
     }
@@ -93,7 +97,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     public void setupAuthStrategies() {
         // use keycloak authentication
-        if (config.getBoolean(ConfigProperties.KEYCLOAK_AUTHENTICATION)) {
+        if (config.getBoolean(ConfigProperties.KEYCLOAK_AUTHENTICATION) &&
+            keycloakAdapterConfiguration.getAdapterConfig() != null) {
             providers.add(injector.getInstance(KeycloakAuth.class));
         }
         // use oauth
