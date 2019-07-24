@@ -17,6 +17,7 @@ package org.candlepin.resteasy.filter;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.candlepin.auth.KeycloakAdapterConfiguration;
 import org.candlepin.auth.NoAuthPrincipal;
 import org.candlepin.auth.Principal;
 import org.candlepin.auth.UserPrincipal;
@@ -69,6 +70,7 @@ public class AuthenticationFilterTest extends DatabaseTestFixture {
     @Mock private CandlepinSecurityContext mockSecurityContext;
     @Mock private ResourceInfo mockInfo;
     @Mock private UserServiceAdapter usa;
+    @Mock private KeycloakAdapterConfiguration keycloakAdapterConfiguration;
 
     private AuthenticationFilter interceptor;
     private MockHttpRequest mockReq;
@@ -94,7 +96,7 @@ public class AuthenticationFilterTest extends DatabaseTestFixture {
         config.setProperty(ConfigProperties.BASIC_AUTHENTICATION, "true");
         config.setProperty(ConfigProperties.TRUSTED_AUTHENTICATION, "true");
 
-        interceptor = new AuthenticationFilter(config, consumerCurator, deletedConsumerCurator, injector);
+        interceptor = new AuthenticationFilter(config, consumerCurator, deletedConsumerCurator, injector, keycloakAdapterConfiguration);
         interceptor.setHttpServletRequest(mockHttpServletRequest);
     }
 
