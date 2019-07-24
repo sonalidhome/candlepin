@@ -109,7 +109,6 @@ import org.candlepin.policy.js.pool.PoolRules;
 import org.candlepin.resource.ActivationKeyContentOverrideResource;
 import org.candlepin.resource.ActivationKeyResource;
 import org.candlepin.resource.AdminResource;
-import org.candlepin.resource.AtomFeedResource;
 import org.candlepin.resource.CdnResource;
 import org.candlepin.resource.CertificateSerialResource;
 import org.candlepin.resource.ConsumerContentOverrideResource;
@@ -121,7 +120,6 @@ import org.candlepin.resource.DeletedConsumerResource;
 import org.candlepin.resource.DistributorVersionResource;
 import org.candlepin.resource.EntitlementResource;
 import org.candlepin.resource.EnvironmentResource;
-import org.candlepin.resource.EventResource;
 import org.candlepin.resource.GuestIdResource;
 import org.candlepin.resource.HypervisorResource;
 import org.candlepin.resource.JobResource;
@@ -154,6 +152,7 @@ import org.candlepin.resteasy.filter.VerifyAuthorizationFilter;
 import org.candlepin.resteasy.filter.VersionResponseFilter;
 import org.candlepin.service.UniqueIdGenerator;
 import org.candlepin.service.impl.DefaultUniqueIdGenerator;
+import org.candlepin.service.impl.HypervisorUpdateAction;
 import org.candlepin.swagger.CandlepinSwaggerModelConverter;
 import org.candlepin.sync.ConsumerExporter;
 import org.candlepin.sync.ConsumerTypeExporter;
@@ -229,27 +228,10 @@ public class CandlepinModule extends AbstractModule {
         bind(X509ExtensionUtil.class);
         bind(ResolverUtil.class);
         bind(GuestMigration.class);
-        bind(ConsumerResource.class);
-        bind(ConsumerContentOverrideResource.class);
-        bind(ActivationKeyContentOverrideResource.class);
-        bind(HypervisorResource.class);
-        bind(ConsumerTypeResource.class);
-        bind(ContentResource.class);
-        bind(AtomFeedResource.class);
-        bind(EventResource.class);
-        bind(PoolResource.class);
-        bind(EntitlementResource.class);
-        bind(OwnerResource.class);
-        bind(OwnerProductResource.class);
-        bind(OwnerContentResource.class);
-        bind(RoleResource.class);
-        bind(RootResource.class);
-        bind(ProductResource.class);
-        bind(SubscriptionResource.class);
-        bind(ActivationKeyResource.class);
-        bind(CertificateSerialResource.class);
-        bind(CrlResource.class);
-        bind(JobResource.class);
+
+        // Endpoint resource
+        resources();
+
         bind(DateSource.class).to(DateSourceImpl.class).asEagerSingleton();
         bind(Enforcer.class).to(EntitlementRules.class);
         bind(EntitlementRulesTranslator.class);
@@ -257,14 +239,11 @@ public class CandlepinModule extends AbstractModule {
         bind(ModeManager.class).to(ModeManagerImpl.class).asEagerSingleton();
         bind(SuspendModeTransitioner.class).asEagerSingleton();
         bind(ScheduledExecutorService.class).toProvider(ScheduledExecutorServiceProvider.class);
+        bind(HypervisorUpdateAction.class);
         bind(OwnerManager.class);
         bind(PoolRules.class);
         bind(CriteriaRules.class);
         bind(Entitler.class);
-        bind(RulesResource.class);
-        bind(AdminResource.class);
-        bind(StatusResource.class);
-        bind(EnvironmentResource.class);
         bind(NotSupportedExceptionMapper.class);
         bind(NotAuthorizedExceptionMapper.class);
         bind(NotFoundExceptionMapper.class);
@@ -289,12 +268,7 @@ public class CandlepinModule extends AbstractModule {
         bind(JsRunner.class).toProvider(JsRunnerProvider.class);
         bind(RulesObjectMapper.class).asEagerSingleton();
         bind(SyncUtils.class).asEagerSingleton();
-        bind(UserResource.class);
         bind(UniqueIdGenerator.class).to(DefaultUniqueIdGenerator.class);
-        bind(DistributorVersionResource.class);
-        bind(DeletedConsumerResource.class);
-        bind(CdnResource.class);
-        bind(GuestIdResource.class);
         bind(AttributeValidator.class);
         bind(FactValidator.class);
         bind(DateFormatter.class);
@@ -313,7 +287,6 @@ public class CandlepinModule extends AbstractModule {
         // flexible end date for identity certificates
         bind(Function.class).annotatedWith(Names.named("endDateGenerator"))
             .to(ExpiryDateFunction.class).in(Singleton.class);
-
         // only initialize if we've enabled AMQP integration
         if (config.getBoolean(ConfigProperties.AMQP_INTEGRATION_ENABLED)) {
             configureAmqp();
@@ -339,6 +312,37 @@ public class CandlepinModule extends AbstractModule {
         if (config.getBoolean(ConfigProperties.KEYCLOAK_AUTHENTICATION)) {
             bind(KeycloakAdapterConfiguration.class);
         }
+    }
+
+    private void resources() {
+        bind(ConsumerResource.class);
+        bind(ConsumerContentOverrideResource.class);
+        bind(ActivationKeyContentOverrideResource.class);
+        bind(HypervisorResource.class);
+        bind(ConsumerTypeResource.class);
+        bind(ContentResource.class);
+        bind(PoolResource.class);
+        bind(EntitlementResource.class);
+        bind(OwnerResource.class);
+        bind(OwnerProductResource.class);
+        bind(OwnerContentResource.class);
+        bind(RoleResource.class);
+        bind(RootResource.class);
+        bind(ProductResource.class);
+        bind(SubscriptionResource.class);
+        bind(ActivationKeyResource.class);
+        bind(CertificateSerialResource.class);
+        bind(CrlResource.class);
+        bind(JobResource.class);
+        bind(RulesResource.class);
+        bind(AdminResource.class);
+        bind(StatusResource.class);
+        bind(EnvironmentResource.class);
+        bind(UserResource.class);
+        bind(DistributorVersionResource.class);
+        bind(DeletedConsumerResource.class);
+        bind(CdnResource.class);
+        bind(GuestIdResource.class);
     }
 
     private void miscConfigurations() {
