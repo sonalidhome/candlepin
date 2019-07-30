@@ -31,6 +31,7 @@ import org.candlepin.model.RulesCurator;
 import org.candlepin.policy.js.JsRunnerProvider;
 
 import com.google.inject.Inject;
+import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.swagger.annotations.Api;
@@ -83,10 +84,11 @@ public class StatusResource {
         if (config == null || !config.getBoolean(ConfigProperties.STANDALONE)) {
             standalone = false;
         }
-        if (keycloakAdapterConfiguration.getAdapterConfig() != null) {
-            realm = keycloakAdapterConfiguration.getAdapterConfig().getRealm();
-            authUrl = keycloakAdapterConfiguration.getAdapterConfig().getAuthServerUrl();
-            resource = keycloakAdapterConfiguration.getAdapterConfig().getResource();
+        AdapterConfig adapterConfig = keycloakAdapterConfiguration.getAdapterConfig();
+        if (adapterConfig != null) {
+            realm = adapterConfig.getRealm();
+            authUrl = adapterConfig.getAuthServerUrl();
+            resource = adapterConfig.getResource();
         }
         this.jsProvider = jsProvider;
     }

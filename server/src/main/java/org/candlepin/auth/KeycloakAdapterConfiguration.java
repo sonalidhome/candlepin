@@ -18,7 +18,10 @@ package org.candlepin.auth;
 
 import org.candlepin.common.config.Configuration;
 import org.candlepin.config.ConfigProperties;
+import org.jboss.resteasy.spi.HttpRequest;
+import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
+import org.keycloak.adapters.RequestAuthenticator;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,14 +39,15 @@ public class KeycloakAdapterConfiguration {
 
     private AdapterConfig adapterConfig;
     private static Logger log = LoggerFactory.getLogger(KeycloakAdapterConfiguration.class);
+    private KeycloakDeployment keycloakDeployment;
 
     @Inject
     public KeycloakAdapterConfiguration(Configuration configuration) {
-
         if (configuration.getBoolean(ConfigProperties.KEYCLOAK_AUTHENTICATION)) {
             try {
                 adapterConfig = KeycloakDeploymentBuilder.loadAdapterConfig(new
                         FileInputStream(configuration.getString(ConfigProperties.KEYCLOAK_FILEPATH)));
+                keycloakDeployment = KeycloakDeploymentBuilder.build(adapterConfig);
             }
             catch (FileNotFoundException e) {
                 log.warn("Keycloak.json file not found", e);
@@ -51,13 +55,19 @@ public class KeycloakAdapterConfiguration {
             catch (RuntimeException e) {
                 log.warn("Unable to read keycloak.json", e);
             }
-
         }
+    }
 
+    public KeycloakDeployment getKeycloakDeployment() {
+        return keycloakDeployment;
     }
 
     public AdapterConfig getAdapterConfig() {
         return adapterConfig;
     }
 
+    public RequestAuthenticator getRequestAuthenticator(HttpRequest httpRequest) {
+        KeycloakOIDCFacade keycloakOIDCFacade = new KeycloakOIDCFacade(httpRequest);
+        return new CandlepinKeycloakRequestAuthenticator(keycloakOIDCFacade, httpRequest, keycloakDeployment);
+    }
 }

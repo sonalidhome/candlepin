@@ -18,14 +18,12 @@ package org.candlepin.auth;
 
 import org.candlepin.common.config.Configuration;
 import org.jboss.resteasy.spi.HttpRequest;
-import org.keycloak.KeycloakPrincipal;
 import org.keycloak.TokenVerifier;
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.ws.rs.core.Context;
 import java.io.IOException;
-import java.util.Set;
 
 import org.candlepin.auth.permissions.PermissionFactory;
 import org.candlepin.common.exceptions.CandlepinException;
@@ -34,16 +32,11 @@ import org.candlepin.common.resteasy.auth.AuthUtil;
 import org.keycloak.KeycloakSecurityContext;
 import org.candlepin.service.UserServiceAdapter;
 import org.keycloak.adapters.AdapterDeploymentContext;
-import org.keycloak.adapters.AdapterUtils;
-import org.keycloak.adapters.OAuthRequestAuthenticator;
-import org.keycloak.adapters.OidcKeycloakAccount;
 import org.keycloak.adapters.RequestAuthenticator;
 import org.keycloak.adapters.ServerRequest;
 import org.keycloak.adapters.RefreshableKeycloakSecurityContext;
 import org.keycloak.adapters.KeycloakDeployment;
-import org.keycloak.adapters.KeycloakDeploymentBuilder;
 
-import org.keycloak.adapters.spi.KeycloakAccount;
 import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
@@ -67,6 +60,7 @@ public class KeycloakAuth extends UserAuth implements AuthProvider {
     protected AdapterDeploymentContext deploymentContext;
     private AccessTokenResponse response = null;
     private KeycloakDeployment kd;
+    private KeycloakAdapterConfiguration keycloakAdapterConfiguration;
     private RefreshableKeycloakSecurityContext securityContext = null;
     private static AdapterConfig adapterConfig = null;
     private Configuration configuration;
@@ -78,7 +72,8 @@ public class KeycloakAuth extends UserAuth implements AuthProvider {
         super(userServiceAdapter, i18nProvider, permissionFactory);
         this.configuration = configuration;
         adapterConfig = keycloakAdapterConfiguration.getAdapterConfig();
-        kd = KeycloakDeploymentBuilder.build(adapterConfig);
+        kd = keycloakAdapterConfiguration.getKeycloakDeployment();
+        this.keycloakAdapterConfiguration = keycloakAdapterConfiguration;
         deploymentContext = new AdapterDeploymentContext(kd);
 
     }
@@ -91,7 +86,7 @@ public class KeycloakAuth extends UserAuth implements AuthProvider {
             if (!auth.isEmpty()) {
 
                 String[] authArray = auth.split(" ");
-                if (authArray[0].equals("Basic")) {
+                if (authArray[0].toUpperCase().equals("BASIC")) {
                     return null;
                 }
                 else {
@@ -131,63 +126,14 @@ public class KeycloakAuth extends UserAuth implements AuthProvider {
     }
 
 
-    private void handleBearerToken(HttpRequest httpRequest) {
-
-        KeycloakOIDCFacade keycloakOIDCFacade = new KeycloakOIDCFacade(httpRequest);
-        RequestAuthenticator requestAuthenticator = new RequestAuthenticator(keycloakOIDCFacade, kd) {
-            @Override
-            protected OAuthRequestAuthenticator createOAuthAuthenticator() {
-                return null;
-            }
-
-            @Override
-            protected void completeOAuthAuthentication(KeycloakPrincipal<RefreshableKeycloakSecurityContext>
-                principal) {
-                 //intentionally left empty
-            }
-
-            @Override
-            protected void completeBearerAuthentication(
-                KeycloakPrincipal<RefreshableKeycloakSecurityContext> principal, String method) {
-                securityContext = principal.getKeycloakSecurityContext();
-
-                final Set<String> roles = AdapterUtils.getRolesFromSecurityContext(securityContext);
-
-                httpRequest.setAttribute(KeycloakSecurityContext.class.getName(), securityContext);
-                OidcKeycloakAccount account = new OidcKeycloakAccount() {
-
-                    @Override
-                    public java.security.Principal getPrincipal() {
-                        return principal;
-                    }
-
-                    @Override
-                    public Set<String> getRoles() {
-                        return roles;
-                    }
-
-                    @Override
-                    public KeycloakSecurityContext getKeycloakSecurityContext() {
-                        return securityContext;
-                    }
-
-                };
-                // need this here to obtain UserPrincipal
-                httpRequest.setAttribute(KeycloakAccount.class.getName(), account);
-            }
-
-            @Override
-            protected String changeHttpSessionId(boolean create) {
-                return null;
-            }
-        };
+    public void handleBearerToken(HttpRequest httpRequest) {
+        RequestAuthenticator requestAuthenticator = keycloakAdapterConfiguration.
+            getRequestAuthenticator(httpRequest);
         requestAuthenticator.authenticate();
-
     }
 
     private void handleRefreshToken(HttpRequest httpRequest, String auth) throws IOException,
         ServerRequest.HttpFailure, VerificationException {
-
         String[] arrAut = auth.split(" ");
         response = ServerRequest.invokeRefresh(kd, arrAut[1]);
         String tokenString = response.getToken();
@@ -195,6 +141,5 @@ public class KeycloakAuth extends UserAuth implements AuthProvider {
         RefreshableKeycloakSecurityContext refreshableKeycloakSecurityContext = new
             RefreshableKeycloakSecurityContext(kd, null, tokenString, token, null, null, arrAut[1]);
         httpRequest.setAttribute(KeycloakSecurityContext.class.getName(), refreshableKeycloakSecurityContext);
-
     }
 }
