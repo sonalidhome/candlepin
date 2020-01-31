@@ -52,6 +52,7 @@ ext.libraries = [
         "com.fasterxml.jackson.module:jackson-module-jaxb-annotations",
         "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5",
         "com.fasterxml.jackson.datatype:jackson-datatype-jdk8",
+        "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",
     ],
     swagger: [
         "io.swagger:swagger-jaxrs",
@@ -234,7 +235,7 @@ allprojects {
             dependencySet(group: "com.fasterxml.jackson.datatype", version: "$versions.jackson") {
                 entry "jackson-datatype-hibernate5"
                 entry "jackson-datatype-jdk8"
-                //entry "jackson-datatype-jsr310"
+                entry "jackson-datatype-jsr310"
             }
             dependencySet(group: "com.fasterxml.jackson.jaxrs", version: "$versions.jackson") {
                 entry "jackson-jaxrs-base"

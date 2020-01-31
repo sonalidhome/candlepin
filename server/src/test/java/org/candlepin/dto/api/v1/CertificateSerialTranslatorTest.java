@@ -71,11 +71,19 @@ public class CertificateSerialTranslatorTest extends
             // This DTO does not have any nested objects, so we don't need to worry about the
             // childrenGenerated flag
 
-            assertEquals(source.getId(), dest.getId());
+            //ToDo: REmove this dependancy of string
+            /*assertEquals(source.getId(), dest.getId());
             assertEquals(source.getSerial(), dest.getSerial());
             assertEquals(source.getExpiration(), dest.getExpiration());
             assertEquals(source.isCollected(), dest.isCollected());
-            assertEquals(source.isRevoked(), dest.isRevoked());
+            assertEquals(source.isRevoked(), dest.isRevoked());*/
+
+            assertEquals(source.getId() == null ? null : source.getId().toString(), dest.getId());
+            assertEquals(source.getSerial() == null ? null : source.getSerial().toString(), dest.getSerial());
+            assertEquals(source.getExpiration(), dest.getExpiration() != null ?
+                new Date(dest.getExpiration().toInstant().toEpochMilli()) : null);
+            assertEquals(source.isCollected(), dest.getCollected());
+            assertEquals(source.isRevoked(), dest.getRevoked());
         }
         else {
             assertNull(dest);

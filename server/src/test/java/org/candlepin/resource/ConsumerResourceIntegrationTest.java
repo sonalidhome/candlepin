@@ -83,6 +83,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -673,10 +674,12 @@ public class ConsumerResourceIntegrationTest extends DatabaseTestFixture {
 
         CertificateDTO original = serials.get(0);
         CertificateSerialDTO serialDTO  = original.getSerial();
-        CertificateSerial serial = new CertificateSerial(serialDTO.getId(), serialDTO.getExpiration());
-        serial.setSerial(serialDTO.getSerial().longValue());
-        serial.setCollected(serialDTO.isCollected());
-        serial.setRevoked(serialDTO.isRevoked());
+        OffsetDateTime expirationDate = serialDTO.getExpiration();
+        CertificateSerial serial = new CertificateSerial(Long.valueOf(serialDTO.getId()),
+            expirationDate != null ? new Date(expirationDate.toInstant().toEpochMilli()) : null);
+        serial.setSerial(Long.valueOf(serialDTO.getSerial()));
+        serial.setCollected(serialDTO.getCollected());
+        serial.setRevoked(serialDTO.getRevoked());
 
         Calendar cal = Calendar.getInstance();
         cal.setTime(serial.getExpiration());
