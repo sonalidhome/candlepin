@@ -30,7 +30,6 @@ import org.candlepin.common.exceptions.NotFoundException;
 import org.candlepin.dto.ModelTranslator;
 import org.candlepin.dto.api.v1.AsyncJobStatusDTO;
 import org.candlepin.dto.api.v1.ConsumerDTO;
-import org.candlepin.dto.api.v1.GuestIdDTO;
 import org.candlepin.dto.api.v1.HypervisorConsumerDTO;
 import org.candlepin.dto.api.v1.HypervisorUpdateResultDTO;
 import org.candlepin.model.AsyncJobStatus;
@@ -149,7 +148,7 @@ public class HypervisorResource {
     @UpdateConsumerCheckIn
     @SuppressWarnings("checkstyle:indentation")
     public HypervisorUpdateResultDTO hypervisorUpdate(
-        Map<String, List<GuestIdDTO>> hostGuestDTOMap, @Context Principal principal,
+        Map<String, List<String>> hostGuestDTOMap, @Context Principal principal,
         @QueryParam("owner") @Verify(value = Owner.class,
             require = Access.READ_ONLY,
             subResource = SubResource.HYPERVISOR) String ownerKey,
@@ -177,15 +176,15 @@ public class HypervisorResource {
         int emptyGuestIdCount = 0;
         Set<String> allGuestIds = new HashSet<>();
 
-        Collection<List<GuestIdDTO>> idsLists = hostGuestDTOMap.values();
-        for (List<GuestIdDTO> guestIds : idsLists) {
+        Collection<List<String>> idsLists = hostGuestDTOMap.values();
+        for (List<String> guestIds : idsLists) {
             // ignore null guest lists
             // See bzs 1332637, 1332635
             if (guestIds == null) {
                 continue;
             }
-            for (Iterator<GuestIdDTO> guestIdsItr = guestIds.iterator(); guestIdsItr.hasNext();) {
-                String id = guestIdsItr.next().getGuestId();
+            for (Iterator<String> guestIdsItr = guestIds.iterator(); guestIdsItr.hasNext();) {
+                String id = guestIdsItr.next();
 
                 if (StringUtils.isEmpty(id)) {
                     emptyGuestIdCount++;
@@ -202,7 +201,7 @@ public class HypervisorResource {
         }
 
         HypervisorUpdateResultDTO result = new HypervisorUpdateResultDTO();
-        for (Entry<String, List<GuestIdDTO>> hostEntry : hostGuestDTOMap.entrySet()) {
+        for (Entry<String, List<String>> hostEntry : hostGuestDTOMap.entrySet()) {
             String hypervisorId = hostEntry.getKey();
             // Treat null guest list as an empty list.
             // We can get an empty list here from katello due to an update
