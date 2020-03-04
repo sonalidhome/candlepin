@@ -57,12 +57,17 @@ import org.candlepin.controller.ManifestManager;
 import org.candlepin.controller.OwnerManager;
 import org.candlepin.controller.PoolManager;
 import org.candlepin.dto.api.v1.ActivationKeyDTO;
+import org.candlepin.dto.api.v1.ActivationKeyPoolDTO;
+import org.candlepin.dto.api.v1.ActivationKeyProductDTO;
 import org.candlepin.dto.api.v1.AsyncJobStatusDTO;
 import org.candlepin.dto.api.v1.ConsumerDTO;
+import org.candlepin.dto.api.v1.ContentOverrideDTO;
 import org.candlepin.dto.api.v1.EntitlementDTO;
 import org.candlepin.dto.api.v1.ImportRecordDTO;
+import org.candlepin.dto.api.v1.NestedOwnerDTO;
 import org.candlepin.dto.api.v1.OwnerDTO;
 import org.candlepin.dto.api.v1.PoolDTO;
+import org.candlepin.dto.api.v1.ReleaseVerDTO;
 import org.candlepin.dto.api.v1.SystemPurposeAttributesDTO;
 import org.candlepin.dto.api.v1.UeberCertificateDTO;
 import org.candlepin.dto.api.v1.UpstreamConsumerDTO;
@@ -97,9 +102,13 @@ import org.candlepin.model.UpstreamConsumer;
 import org.candlepin.model.activationkeys.ActivationKey;
 import org.candlepin.model.activationkeys.ActivationKeyCurator;
 import org.candlepin.model.dto.Subscription;
+<<<<<<< HEAD
 import org.candlepin.resource.util.CalculatedAttributesUtil;
 import org.candlepin.resource.util.ConsumerTypeValidator;
 import org.candlepin.resource.util.ResolverUtil;
+=======
+import org.candlepin.resource.validation.DTOValidator;
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 import org.candlepin.resteasy.parameter.KeyValueParameter;
 import org.candlepin.service.OwnerServiceAdapter;
 import org.candlepin.service.impl.DefaultOwnerServiceAdapter;
@@ -158,6 +167,7 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Inject private ContentOverrideValidator contentOverrideValidator;
     @Inject private UeberCertificateGenerator ueberCertGenerator;
     @Inject private UeberCertificateCurator ueberCertCurator;
+    @Inject private DTOValidator dtoValidator;
 
     // Mocks used to build the owner resource
     private ActivationKeyCurator mockActivationKeyCurator;
@@ -944,14 +954,14 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
     @Test
     public void testActivationKeyCreateRead() {
-        ActivationKeyDTO key = new ActivationKeyDTO();
-        key.setName("dd");
-        key.setReleaseVersion("release1");
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .name("dd")
+            .releaseVer(new ReleaseVerDTO().releaseVer("release1"));
 
         key = ownerResource.createActivationKey(owner.getKey(), key);
         assertNotNull(key.getId());
         assertEquals(key.getOwner().getId(), owner.getId());
-        assertEquals(key.getReleaseVersion(), "release1");
+        assertEquals(key.getReleaseVer().getReleaseVer(), "release1");
         CandlepinQuery<ActivationKeyDTO> result = ownerResource.ownerActivationKeys(owner.getKey(), null);
 
         assertNotNull(result);
@@ -962,21 +972,21 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
     @Test
     public void testSearchActivationsKeysByName() {
-        ActivationKeyDTO key = new ActivationKeyDTO();
-        key.setName("dd");
-        key.setReleaseVersion("release1");
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .name("dd")
+            .releaseVer(new ReleaseVerDTO().releaseVer("release1"));
         key = ownerResource.createActivationKey(owner.getKey(), key);
         assertNotNull(key.getId());
         assertEquals(key.getOwner().getId(), owner.getId());
-        assertEquals(key.getReleaseVersion(), "release1");
+        assertEquals(key.getReleaseVer().getReleaseVer(), "release1");
 
-        key = new ActivationKeyDTO();
-        key.setName("blah");
-        key.setReleaseVersion("release2");
+        key = new ActivationKeyDTO()
+            .name("blah")
+            .releaseVer(new ReleaseVerDTO().releaseVer("release2"));
         key = ownerResource.createActivationKey(owner.getKey(), key);
         assertNotNull(key.getId());
         assertEquals(key.getOwner().getId(), owner.getId());
-        assertEquals(key.getReleaseVersion(), "release2");
+        assertEquals(key.getReleaseVer().getReleaseVer(), "release2");
 
         CandlepinQuery<ActivationKeyDTO> result = ownerResource.ownerActivationKeys(owner.getKey(), "dd");
         assertNotNull(result);
@@ -994,11 +1004,19 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         OwnerCurator oc = mock(OwnerCurator.class);
         Owner o = new Owner();
         o.setKey("owner-key");
+<<<<<<< HEAD
 
         when(this.mockOwnerCurator.getByKey(anyString())).thenReturn(o);
 
         OwnerResource resource = this.buildOwnerResource();
 
+=======
+        OwnerResource ownerres = new OwnerResource(
+            oc, null, null, i18n, null, null, null, null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null, null, null,
+            null, null, this.modelTranslator, this.jobManager, this.dtoValidator);
+        when(oc.getByKey(anyString())).thenReturn(o);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
         ActivationKeyDTO key = new ActivationKeyDTO();
         assertThrows(BadRequestException.class, () -> resource.createActivationKey(owner.getKey(), key));
     }
@@ -1007,15 +1025,221 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testActivationKeyTooLongRelease() {
         Owner o = new Owner();
         o.setKey("owner-key");
+<<<<<<< HEAD
 
         when(this.mockOwnerCurator.getByKey(anyString())).thenReturn(o);
 
         OwnerResource resource = this.buildOwnerResource();
 
+=======
+        OwnerResource ownerres = new OwnerResource(
+            oc, null, null, i18n, null, null, null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null, null, null, null,
+            null, null, this.modelTranslator, this.jobManager, this.dtoValidator);
+        when(oc.getByKey(anyString())).thenReturn(o);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
         ActivationKeyDTO key = new ActivationKeyDTO();
-        key.setReleaseVersion(TestUtil.getStringOfSize(256));
+        key.releaseVer(new ReleaseVerDTO().releaseVer(TestUtil.getStringOfSize(256)));
 
         assertThrows(BadRequestException.class, () -> resource.createActivationKey(owner.getKey(), key));
+    }
+
+    @Test
+    public void testValidationCreateWithNullProductId() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ActivationKeyProductDTO> products = new HashSet<>();
+        products.add(new ActivationKeyProductDTO().productId(null));
+        key.products(products);
+
+        assertThrows(javax.validation.ConstraintViolationException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithEmptyProductId() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ActivationKeyProductDTO> products = new HashSet<>();
+        products.add(new ActivationKeyProductDTO().productId(""));
+        key.products(products);
+
+        assertThrows(javax.validation.ConstraintViolationException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithNullProduct() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ActivationKeyProductDTO> products = new HashSet<>();
+        products.add(null);
+        key.products(products);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithNullPoolId() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ActivationKeyPoolDTO> pools = new HashSet<>();
+        pools.add(new ActivationKeyPoolDTO().poolId(null));
+        key.pools(pools);
+
+        assertThrows(javax.validation.ConstraintViolationException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithEmptyPoolId() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ActivationKeyPoolDTO> pools = new HashSet<>();
+        pools.add(new ActivationKeyPoolDTO().poolId(""));
+        key.pools(pools);
+
+        assertThrows(javax.validation.ConstraintViolationException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithNullPool() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ActivationKeyPoolDTO> pools = new HashSet<>();
+        pools.add(null);
+        key.pools(pools);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithNullContentOverrideName() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ContentOverrideDTO> contentOverrideDTOS = new HashSet<>();
+        contentOverrideDTOS.add(new ContentOverrideDTO().name(null).contentLabel("a label"));
+        key.contentOverrides(contentOverrideDTOS);
+
+        assertThrows(javax.validation.ConstraintViolationException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithEmptyContentOverrideName() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ContentOverrideDTO> contentOverrideDTOS = new HashSet<>();
+        contentOverrideDTOS.add(new ContentOverrideDTO().name("").contentLabel("a label"));
+        key.contentOverrides(contentOverrideDTOS);
+
+        assertThrows(javax.validation.ConstraintViolationException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithNullContentOverrideLabel() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ContentOverrideDTO> contentOverrideDTOS = new HashSet<>();
+        contentOverrideDTOS.add(new ContentOverrideDTO().name("a name").contentLabel(null));
+        key.contentOverrides(contentOverrideDTOS);
+
+        assertThrows(javax.validation.ConstraintViolationException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithEmptyContentOverrideLabel() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ContentOverrideDTO> contentOverrideDTOS = new HashSet<>();
+        contentOverrideDTOS.add(new ContentOverrideDTO().name("a name").contentLabel(""));
+        key.contentOverrides(contentOverrideDTOS);
+
+        assertThrows(javax.validation.ConstraintViolationException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
+    }
+
+    @Test
+    public void testValidationCreateActivationKeyWithNullContentOverride() {
+        NestedOwnerDTO nestedOwnerDTO = new NestedOwnerDTO();
+        nestedOwnerDTO.key(owner.getKey());
+
+        ActivationKeyDTO key = new ActivationKeyDTO()
+            .owner(nestedOwnerDTO)
+            .name("dd");
+
+        Set<ContentOverrideDTO> contentOverrideDTOS = new HashSet<>();
+        contentOverrideDTOS.add(null);
+        key.contentOverrides(contentOverrideDTOS);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            this.ownerResource.createActivationKey(owner.getKey(), key)
+        );
     }
 
     private Pool doTestEntitlementsRevocationCommon(long subQ, int e1, int e2) throws ParseException {
@@ -1179,8 +1403,21 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Test
     public void testConflictOnDelete() {
         Owner o = mock(Owner.class);
+<<<<<<< HEAD
 
         when(this.mockOwnerCurator.getByKey(eq("testOwner"))).thenReturn(o);
+=======
+        OwnerCurator oc = mock(OwnerCurator.class);
+        OwnerManager ownerManager = mock(OwnerManager.class);
+        EventFactory eventFactory = mock(EventFactory.class);
+        OwnerResource or = new OwnerResource(
+            oc, null, null, i18n, null, eventFactory, null, null, poolManager, ownerManager,  null,
+            null, null, null, null, null, null, null, contentOverrideValidator,
+            serviceLevelValidator, null, null, null, null, null,
+            this.modelTranslator, this.jobManager, null);
+
+        when(oc.getByKey(eq("testOwner"))).thenReturn(o);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
         ConstraintViolationException ce = new ConstraintViolationException(null, null, null);
         PersistenceException pe = new PersistenceException(ce);
         Mockito.doThrow(pe).when(this.mockOwnerManager).cleanupAndDelete(eq(o), eq(true));
@@ -1200,7 +1437,15 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         when(this.mockActivationKeyCurator.getByKeyName(eq(o), eq("testKey"))).thenReturn(akOld);
         when(this.mockOwnerCurator.getByKey(eq("testOwner"))).thenReturn(o);
 
+<<<<<<< HEAD
         OwnerResource resource = this.buildOwnerResource();
+=======
+        OwnerResource ownerres = new OwnerResource(
+            oc, akc, null, i18n, null, null, null, null, null, null, null, null, null,
+            null, null, null, null,
+            null, contentOverrideValidator, null, null, null, null, null,
+            null, this.modelTranslator, this.jobManager, this.dtoValidator);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         assertThrows(BadRequestException.class, () -> resource.createActivationKey("testOwner", ak));
     }
@@ -1332,10 +1577,18 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Test
     public void testImportManifestSynchronousSuccess() throws IOException, ImporterException {
         OwnerResource thisOwnerResource = new OwnerResource(
+<<<<<<< HEAD
             ownerCurator, null, null, i18n, this.mockEventSink, eventFactory, null, null,
             this.mockManifestManager, null, null, null, null, importRecordCurator, null, null, null, null,
             null, contentOverrideValidator, serviceLevelValidator, null, null, null, null, null,
             this.modelTranslator, this.mockJobManager);
+=======
+            ownerCurator, null, null, i18n, es, eventFactory, null,
+            manifestManager, null, null, null,
+            null, importRecordCurator, null, null, null, null, null, contentOverrideValidator,
+            serviceLevelValidator, null, null, null, null,
+            null, this.modelTranslator, this.jobManager, null);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         MultipartInput input = mock(MultipartInput.class);
         InputPart part = mock(InputPart.class);
@@ -1365,10 +1618,18 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Test
     public void testImportManifestAsyncSuccess() throws IOException, ImporterException, JobException {
         OwnerResource thisOwnerResource = new OwnerResource(
+<<<<<<< HEAD
             this.mockOwnerCurator, null, null, i18n, this.mockEventSink, eventFactory, null, null,
             this.mockManifestManager, null, null, null, null, importRecordCurator, null, null, null, null,
             null, contentOverrideValidator, serviceLevelValidator, null, null, null, null, null,
             this.modelTranslator, this.mockJobManager);
+=======
+            oc, null, null, i18n, es, eventFactory, null,
+            manifestManager, null, null, null,
+            null, importRecordCurator, null, null, null, null, null, contentOverrideValidator,
+            serviceLevelValidator, null, null, null, null,
+            null, this.modelTranslator, jm, null);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         MultipartInput input = mock(MultipartInput.class);
         InputPart part = mock(InputPart.class);
@@ -1409,10 +1670,18 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Test
     public void testImportManifestFailure() throws IOException, ImporterException {
         OwnerResource thisOwnerResource = new OwnerResource(
+<<<<<<< HEAD
             ownerCurator, null, null, i18n, this.mockEventSink, eventFactory, null, contentAccessManager,
             this.mockManifestManager, null, null, null, null, importRecordCurator, null, null, null, null,
             null, contentOverrideValidator, serviceLevelValidator, null, null, null, null, null,
             this.modelTranslator, this.mockJobManager);
+=======
+            ownerCurator, null, null, i18n, es, eventFactory, null,
+            manifestManager, null, null, null,
+            null, importRecordCurator, null, null, null, null, null, contentOverrideValidator,
+            serviceLevelValidator, null, null, null, null,
+            null, this.modelTranslator, this.jobManager, null);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         MultipartInput input = mock(MultipartInput.class);
         InputPart part = mock(InputPart.class);
@@ -1449,6 +1718,14 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         Owner owner = mock(Owner.class);
         Principal p = mock(Principal.class);
         UpstreamConsumer upstream = mock(UpstreamConsumer.class);
+<<<<<<< HEAD
+=======
+        Owner owner = mock(Owner.class);
+        OwnerResource ownerres = new OwnerResource(
+            oc, null, null, i18n, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, contentOverrideValidator, serviceLevelValidator, null,
+            null, null, null, null, this.modelTranslator, this.jobManager, null);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         OwnerResource resource = this.buildOwnerResource();
 
@@ -1655,8 +1932,18 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         Page<List<Entitlement>> page = new Page<>();
         page.setPageData(entitlements);
 
+<<<<<<< HEAD
         List<EntitlementDTO> result = this.ownerResource
             .ownerEntitlements(owner.getKey(), null, null, null, req);
+=======
+        OwnerResource ownerres = new OwnerResource(
+            this.ownerCurator, null, null, i18n, null, null, null,
+            null, null, null, null, null, null, this.entitlementCurator,
+            null, null, null, null, null, null, null, null, null, null,
+            null, this.modelTranslator, this.jobManager, null);
+
+        List<EntitlementDTO> result = ownerres.ownerEntitlements(owner.getKey(), null, null, null, req);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         assertEquals(1, result.size());
         assertEquals(e.getId(), result.get(0).getId());
@@ -1668,7 +1955,15 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         req.setPage(1);
         req.setPerPage(10);
 
+<<<<<<< HEAD
         OwnerResource resource = this.buildOwnerResource();
+=======
+        OwnerCurator oc = mock(OwnerCurator.class);
+        OwnerResource ownerres = new OwnerResource(
+            oc, null, null, i18n, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null,
+            null, this.modelTranslator, this.jobManager, null);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         assertThrows(NotFoundException.class, () ->
             resource.ownerEntitlements("Taylor Swift", null, null, null, req)
@@ -1684,8 +1979,15 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         when(this.mockOwnerCurator.getByKey(eq("admin")))
             .thenReturn(owner);
 
+<<<<<<< HEAD
         when(this.mockUeberCertificateGenerator.generate(eq(owner.getKey()), eq(principal)))
             .thenReturn(entCert);
+=======
+        OwnerResource resource = new OwnerResource(
+            oc, null, cc, i18n, null, null, null, null, cpm, null, null, null, null, ec,
+            uc, ucg, null, null, null, null, null, null, null, null,
+            null, this.modelTranslator, this.jobManager, null);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         OwnerResource resource = this.buildOwnerResource();
 
@@ -1702,8 +2004,17 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
         OwnerResource resource = this.buildOwnerResource();
 
+<<<<<<< HEAD
         when(this.mockUeberCertificateGenerator.generate(eq(owner.getKey()), eq(principal)))
             .thenReturn(entCert);
+=======
+        OwnerResource resource = new OwnerResource(
+            oc, null, cc, i18n, null, null, null, null, cpm, null, null, null, null, ec,
+            uc, ucg, null, null, null, null, null, null, null, null,
+            null, this.modelTranslator, this.jobManager, null);
+
+        when(ucg.generate(eq(owner.getKey()), eq(principal))).thenReturn(entCert);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         UeberCertificateDTO expected = this.modelTranslator.translate(entCert, UeberCertificateDTO.class);
         UeberCertificateDTO result = resource.createUeberCertificate(principal, owner.getKey());
@@ -1715,7 +2026,14 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testReturnProductSysPurposeValuesForOwner() throws Exception {
         Owner owner = TestUtil.createOwner();
 
+<<<<<<< HEAD
         OwnerResource resource = this.buildOwnerResource();
+=======
+        OwnerResource resource = new OwnerResource(oc, null, null, null, null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            opc, this.modelTranslator, this.jobManager, null
+        );
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         when(this.mockOwnerCurator.getByKey(eq(owner.getKey())))
             .thenReturn(owner);
@@ -1757,8 +2075,17 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testReturnConsumerSysPurposeValuesForOwner() throws Exception {
         Owner owner = TestUtil.createOwner();
 
+<<<<<<< HEAD
         when(this.mockOwnerCurator.getByKey(eq(owner.getKey())))
             .thenReturn(owner);
+=======
+        OwnerResource resource = new OwnerResource(oc, null, cc, null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            this.modelTranslator, this.jobManager, null
+        );
+
+        when(oc.getByKey(eq(owner.getKey()))).thenReturn(owner);
+>>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         List<String> mockRoles = new ArrayList<>();
         mockRoles.add("role1");
