@@ -17,9 +17,7 @@ package org.candlepin.dto.api.v1;
 import org.candlepin.dto.ModelTranslator;
 import org.candlepin.dto.ObjectTranslator;
 import org.candlepin.model.CertificateSerial;
-
-import java.time.ZoneOffset;
-import java.util.Date;
+import org.candlepin.util.Util;
 
 
 /**
@@ -84,12 +82,19 @@ public class CertificateSerialTranslator implements ObjectTranslator<Certificate
 
 
         /*dest.id(source.getId() == null ? null : source.getId().toString());*/
-        dest.serial(source.getSerial() == null ? null : source.getSerial().toString());
+        /*dest.serial(source.getSerial() == null ? null : source.getSerial().toString());
         Date expirationDate = source.getExpiration();
         dest.expiration(expirationDate != null ? expirationDate.toInstant().atOffset(ZoneOffset.UTC) : null);
         dest.collected(source.isCollected());
-        dest.revoked(source.isRevoked());
+        dest.revoked(source.isRevoked());*/
 
+        dest.id(source.getId() == null ? null : source.getId())
+            .serial(source.getSerial() == null ? null : source.getSerial().toString())
+            .created(Util.toDateTime(source.getCreated()))
+            .updated(Util.toDateTime(source.getUpdated()))
+            .expiration(Util.toDateTime(source.getExpiration()))
+            .collected(source.isCollected())
+            .revoked(source.isRevoked());
 
 
         return dest;
