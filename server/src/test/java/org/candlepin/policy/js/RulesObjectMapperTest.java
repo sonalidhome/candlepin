@@ -14,7 +14,6 @@
  */
 package org.candlepin.policy.js;
 
-<<<<<<< HEAD
 import static org.junit.Assert.assertFalse;
 
 import org.candlepin.dto.rules.v1.ComplianceStatusDTO;
