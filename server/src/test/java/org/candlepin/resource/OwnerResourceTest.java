@@ -70,7 +70,7 @@ import org.candlepin.dto.api.v1.PoolDTO;
 import org.candlepin.dto.api.v1.ReleaseVerDTO;
 import org.candlepin.dto.api.v1.SystemPurposeAttributesDTO;
 import org.candlepin.dto.api.v1.UeberCertificateDTO;
-import org.candlepin.dto.api.v1.UpstreamConsumerDTOArrayElement;
+import org.candlepin.dto.api.v1.UpstreamConsumerDTO;
 import org.candlepin.dto.manifest.v1.ProductDTO;
 import org.candlepin.dto.manifest.v1.SubscriptionDTO;
 import org.candlepin.model.AsyncJobStatus;
@@ -102,13 +102,10 @@ import org.candlepin.model.UpstreamConsumer;
 import org.candlepin.model.activationkeys.ActivationKey;
 import org.candlepin.model.activationkeys.ActivationKeyCurator;
 import org.candlepin.model.dto.Subscription;
-<<<<<<< HEAD
 import org.candlepin.resource.util.CalculatedAttributesUtil;
 import org.candlepin.resource.util.ConsumerTypeValidator;
 import org.candlepin.resource.util.ResolverUtil;
-=======
 import org.candlepin.resource.validation.DTOValidator;
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 import org.candlepin.resteasy.parameter.KeyValueParameter;
 import org.candlepin.service.OwnerServiceAdapter;
 import org.candlepin.service.impl.DefaultOwnerServiceAdapter;
@@ -1734,10 +1731,14 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         when(owner.getUpstreamConsumer()).thenReturn(upstream);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         List<UpstreamConsumerDTO> results = resource.getUpstreamConsumers(p, "admin");
 =======
         List<UpstreamConsumerDTOArrayElement> results = ownerres.getUpstreamConsumers(p, "admin");
 >>>>>>> ENT-1861: Port OwnerDTO to openapi spec
+=======
+        List<UpstreamConsumerDTO> results = ownerres.getUpstreamConsumers(p, "admin");
+>>>>>>> ENT-1861: Port OwnerDTO to openapi spec (FIX)
 
         assertNotNull(results);
         assertEquals(1, results.size());
