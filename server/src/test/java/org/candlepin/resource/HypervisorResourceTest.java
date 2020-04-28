@@ -33,6 +33,7 @@ import org.candlepin.dto.ModelTranslator;
 import org.candlepin.dto.StandardTranslator;
 import org.candlepin.dto.api.v1.HypervisorConsumerDTO;
 import org.candlepin.dto.api.v1.HypervisorUpdateResultDTO;
+import org.candlepin.guice.PrincipalProvider;
 import org.candlepin.model.Consumer;
 import org.candlepin.model.ConsumerCurator;
 import org.candlepin.model.ConsumerType;
@@ -86,8 +87,6 @@ import java.util.Set;
 
 import javax.inject.Provider;
 
-
-
 /**
  * Test suite for the HypervisorResource test class
  */
@@ -113,6 +112,7 @@ public class HypervisorResourceTest {
     @Mock private GuestIdCurator guestIdCurator;
     @Mock private EnvironmentCurator environmentCurator;
     @Mock private JobManager jobManager;
+    @Mock private PrincipalProvider principalProvider;
 
     private GuestIdResource guestIdResource;
 
@@ -159,7 +159,7 @@ public class HypervisorResourceTest {
 
         this.hypervisorResource = new HypervisorResource(consumerResource,
             consumerCurator, consumerTypeCurator, i18n, ownerCurator, migrationProvider, modelTranslator,
-            guestIdResource, jobManager, new ObjectMapper());
+            guestIdResource, jobManager, principalProvider);
 
         // Ensure that we get the consumer that was passed in back from the create call.
         when(consumerCurator.create(any(Consumer.class)))
@@ -233,8 +233,10 @@ public class HypervisorResourceTest {
         when(idCertService.generateIdentityCert(any(Consumer.class)))
             .thenReturn(new IdentityCertificate());
 
+        when(this.principalProvider.get()).thenReturn(this.principal);
+
         HypervisorUpdateResultDTO result = hypervisorResource.hypervisorUpdate(
-            hostGuestMap, principal, owner.getKey(), true);
+            owner.getKey(), hostGuestMap, true);
 
         Collection<HypervisorConsumerDTO> created = result.getCreated();
         assertEquals(1, created.size());
@@ -279,7 +281,7 @@ public class HypervisorResourceTest {
             .thenReturn(new VirtConsumerMap());
 
         HypervisorUpdateResultDTO result = hypervisorResource.hypervisorUpdate(
-            hostGuestMap, principal, owner.getKey(), true);
+            owner.getKey(), hostGuestMap, true);
 
         List<HypervisorConsumerDTO> updated = new ArrayList<>(result.getUpdated());
         assertEquals(1, updated.size());
@@ -321,8 +323,10 @@ public class HypervisorResourceTest {
         when(consumerCurator.create(any(Consumer.class)))
             .thenThrow(exception);
 
+        when(this.principalProvider.get()).thenReturn(this.principal);
+
         HypervisorUpdateResultDTO result = hypervisorResource.hypervisorUpdate(
-            hostGuestMap, principal, owner.getKey(), true);
+            owner.getKey(), hostGuestMap, true);
 
         List<String> failures = new ArrayList<>(result.getFailedUpdate());
         assertEquals(1, failures.size());
@@ -352,9 +356,9 @@ public class HypervisorResourceTest {
             .thenReturn(new IdentityCertificate());
 
         HypervisorUpdateResultDTO result = hypervisorResource.hypervisorUpdate(
-            hostGuestMap, principal, owner.getKey(), false);
+            owner.getKey(), hostGuestMap, false);
 
-        assertNull(result.getCreated());
+        assertEquals(0, result.getCreated().size());
         assertEquals(1, result.getFailedUpdate().size());
 
         String failed = result.getFailedUpdate().iterator().next();
@@ -365,8 +369,7 @@ public class HypervisorResourceTest {
     @SuppressWarnings("deprecation")
     @Test
     public void ensureBadRequestWhenNoMappingIsIncludedInRequest() {
-        assertThrows(BadRequestException.class,
-            () -> hypervisorResource.hypervisorUpdate(null, principal, "an-owner", false));
+        hypervisorResource.hypervisorUpdate("an-owner", null, false);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked", "deprecation" })
@@ -393,8 +396,10 @@ public class HypervisorResourceTest {
         when(idCertService.generateIdentityCert(any(Consumer.class)))
             .thenReturn(new IdentityCertificate());
 
+        when(this.principalProvider.get()).thenReturn(this.principal);
+
         HypervisorUpdateResultDTO result = hypervisorResource.hypervisorUpdate(
-            hostGuestMap, principal, owner.getKey(), true);
+            owner.getKey(), hostGuestMap, true);
         assertNotNull(result);
         assertEquals(1, result.getCreated().size());
 
@@ -425,8 +430,10 @@ public class HypervisorResourceTest {
         when(idCertService.generateIdentityCert(any(Consumer.class)))
             .thenReturn(new IdentityCertificate());
 
+        when(this.principalProvider.get()).thenReturn(this.principal);
+
         HypervisorUpdateResultDTO result = hypervisorResource.hypervisorUpdate(
-            hostGuestMap, principal, owner.getKey(), true);
+            owner.getKey(), hostGuestMap, true);
         assertNotNull(result);
         assertNotNull(result.getCreated());
 
@@ -456,8 +463,10 @@ public class HypervisorResourceTest {
         when(idCertService.generateIdentityCert(any(Consumer.class)))
             .thenReturn(new IdentityCertificate());
 
+        when(this.principalProvider.get()).thenReturn(this.principal);
+
         HypervisorUpdateResultDTO result = hypervisorResource.hypervisorUpdate(
-            hostGuestMap, principal, owner.getKey(), true);
+            owner.getKey(), hostGuestMap, true);
         assertNotNull(result);
         assertNotNull(result.getCreated());
         List<HypervisorConsumerDTO> created = new ArrayList<>(result.getCreated());
@@ -475,7 +484,7 @@ public class HypervisorResourceTest {
         when(ownerCurator.getByKey(eq(owner.getKey()))).thenReturn(owner);
 
         try {
-            hypervisorResource.hypervisorUpdate(hostGuestMap, principal, owner.getKey(), true);
+            hypervisorResource.hypervisorUpdate(owner.getKey(), hostGuestMap, true);
             fail("Exception should have been thrown since autobind was disabled for the owner.");
         }
         catch (BadRequestException bre) {
