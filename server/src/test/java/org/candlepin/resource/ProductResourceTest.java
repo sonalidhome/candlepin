@@ -211,7 +211,7 @@ public class ProductResourceTest extends DatabaseTestFixture {
         this.setupDBForOwnerProdTests();
 
         List<AsyncJobStatusDTO> jobs = productResource
-            .refreshPoolsForProduct(Collections.singletonList("p1"), true)
+            .refreshPoolsForProducts(Collections.singletonList("p1"), true)
             .collect(Collectors.toList());
 
         assertNotNull(jobs);
@@ -229,7 +229,7 @@ public class ProductResourceTest extends DatabaseTestFixture {
         this.setupDBForOwnerProdTests();
 
         List<AsyncJobStatusDTO> jobs = productResource
-            .refreshPoolsForProduct(Arrays.asList("p1", "p2"), false)
+            .refreshPoolsForProducts(Arrays.asList("p1", "p2"), false)
             .collect(Collectors.toList());
 
         assertNotNull(jobs);
@@ -247,7 +247,7 @@ public class ProductResourceTest extends DatabaseTestFixture {
         this.setupDBForOwnerProdTests();
 
         List<AsyncJobStatusDTO> jobs = productResource
-            .refreshPoolsForProduct(Collections.singletonList("p3"), false)
+            .refreshPoolsForProducts(Collections.singletonList("p3"), false)
             .collect(Collectors.toList());
 
         assertNotNull(jobs);
@@ -265,7 +265,7 @@ public class ProductResourceTest extends DatabaseTestFixture {
         this.setupDBForOwnerProdTests();
 
         List<AsyncJobStatusDTO> jobs = productResource
-            .refreshPoolsForProduct(Collections.singletonList("nope"), false)
+            .refreshPoolsForProducts(Collections.singletonList("nope"), false)
             .collect(Collectors.toList());
 
         assertNotNull(jobs);
@@ -275,7 +275,7 @@ public class ProductResourceTest extends DatabaseTestFixture {
     @Test
     public void testRefreshPoolsByProductInputValidation() {
         assertThrows(BadRequestException.class, () ->
-            productResource.refreshPoolsForProduct(new LinkedList<>(), true)
+            productResource.refreshPoolsForProducts(new LinkedList<>(), true)
         );
     }
 
@@ -300,7 +300,7 @@ public class ProductResourceTest extends DatabaseTestFixture {
 
         List<AsyncJobStatusDTO> jobs = null;
         try {
-            jobs = productResource.refreshPoolsForProduct(Collections.singletonList("p1"), true)
+            jobs = productResource.refreshPoolsForProducts(Collections.singletonList("p1"), true)
                     .collect(Collectors.toList());
         }
         catch (Exception e) {
