@@ -119,7 +119,6 @@ import org.candlepin.resource.util.EntitlementFinderUtil;
 import org.candlepin.resource.util.ResolverUtil;
 import org.candlepin.resource.validation.DTOValidator;
 import org.candlepin.resteasy.DateFormat;
-import org.candlepin.service.ContentAccessCertServiceAdapter;
 import org.candlepin.service.OwnerServiceAdapter;
 import org.candlepin.service.UniqueIdGenerator;
 import org.candlepin.sync.ConflictOverrides;
@@ -728,9 +727,6 @@ public class OwnerResource implements OwnersApi {
      * TODO: Remove this method once EnvironmentDTO gets moved to spec-first
      *  and starts using NestedOwnerDTO.
      */
-    private Owner lookupOwnerFromDto(OwnerDTO ownerDto) {
-        return this.findOwnerByIdOrKey(ownerDto.getId(), ownerDto.getKey());
-    }
 
     /*
      * Populates the specified entity with data from the provided DTO.
@@ -1097,8 +1093,11 @@ public class OwnerResource implements OwnersApi {
      * @param owner
      *  the owner for which to check if the content access mode list is valid
      *
-     * @param contentAccessModeList
+     * @param calist
      *  the content access mode list to check
+     *
+     * @param camode
+     *  the content access mode
      *
      * @throws BadRequestException
      *  if the content access mode list is not currently valid for the given owner
@@ -1472,7 +1471,7 @@ public class OwnerResource implements OwnersApi {
     @Path("{owner_key}/consumers")
     @SuppressWarnings("checkstyle:indentation")
     @ApiOperation(notes = "Retrieve a list of Consumers for the Owner", value = "List Consumers",
-        response = ConsumerDTO.class, responseContainer = "list")
+        response = ConsumerDTOArrayElement.class, responseContainer = "list")
     @ApiResponses({
         @ApiResponse(code = 404, message = "Owner not found"),
         @ApiResponse(code = 400, message = "Invalid request")
@@ -2314,7 +2313,7 @@ public class OwnerResource implements OwnersApi {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{owner_key}/hypervisors")
     @ApiOperation(notes = "Retrieves a list of Hypervisors for an Owner", value = "Get Hypervisors",
-        response = ConsumerDTO.class, responseContainer = "list")
+        response = ConsumerDTOArrayElement.class, responseContainer = "list")
     @ApiResponses({ @ApiResponse(code = 404, message = "Owner not found") })
     public CandlepinQuery<ConsumerDTOArrayElement> getHypervisors(
         @PathParam("owner_key") @Verify(Owner.class) String ownerKey,
@@ -2818,7 +2817,7 @@ public class OwnerResource implements OwnersApi {
         Owner owner = this.getOwnerByKey(ownerKey);
         Content entity = this.createContentImpl(owner, content);
 
-        ownerManager.refreshOwnerForContentAccess(owner);
+        contentAccessManager.refreshOwnerForContentAccess(owner);
 
         return this.translator.translate(entity, ContentDTO.class);
     }
@@ -2839,7 +2838,7 @@ public class OwnerResource implements OwnersApi {
             result.add(this.translator.translate(entity, ContentDTO.class));
         }
 
-        ownerManager.refreshOwnerForContentAccess(owner);
+        contentAccessManager.refreshOwnerForContentAccess(owner);
         return result;
     }
 
@@ -2856,7 +2855,7 @@ public class OwnerResource implements OwnersApi {
         }
 
         existing = this.contentManager.updateContent(content, owner, true);
-        ownerManager.refreshOwnerForContentAccess(owner);
+        contentAccessManager.refreshOwnerForContentAccess(owner);
 
         return this.translator.translate(existing, ContentDTO.class);
     }
@@ -2871,7 +2870,7 @@ public class OwnerResource implements OwnersApi {
         }
 
         this.contentManager.removeContent(owner, content, true);
-        ownerManager.refreshOwnerForContentAccess(owner);
+        contentAccessManager.refreshOwnerForContentAccess(owner);
     }
 
 }

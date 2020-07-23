@@ -19,7 +19,6 @@ import org.candlepin.dto.ObjectTranslator;
 import org.candlepin.model.CertificateSerial;
 import org.candlepin.util.Util;
 
-
 /**
  * The CertificateSerialTranslator provides translation from CertificateSerial model objects to
  * CertificateSerialDTOs
@@ -65,37 +64,13 @@ public class CertificateSerialTranslator implements ObjectTranslator<Certificate
             throw new IllegalArgumentException("dest is null");
         }
 
-        //ToDo: Add date formats
-        /*Date created = source.getCreated();
-        dest.setCreated(created != null ? created.toInstant().atOffset(ZoneOffset.UTC) : null);
-
-        Date updated = source.getUpdated();
-        dest.setUpdated(updated != null ? updated.toInstant().atOffset(ZoneOffset.UTC) : null);*/
-
-        //ToDo: REmove this dependancy of string
-
-        dest.setId(source.getId());
-        /*dest.setSerial(source.getSerial());
-        dest.setExpiration(source.getExpiration());*/
-        dest.setCollected(source.isCollected());
-        dest.setRevoked(source.isRevoked());
-
-
-        /*dest.id(source.getId() == null ? null : source.getId().toString());*/
-        /*dest.serial(source.getSerial() == null ? null : source.getSerial().toString());
-        Date expirationDate = source.getExpiration();
-        dest.expiration(expirationDate != null ? expirationDate.toInstant().atOffset(ZoneOffset.UTC) : null);
-        dest.collected(source.isCollected());
-        dest.revoked(source.isRevoked());*/
-
         dest.id(source.getId() == null ? null : source.getId())
-            .serial(source.getSerial() == null ? null : source.getSerial().toString())
+            .serial(source.getSerial() == null ? null : source.getSerial().longValue())
             .created(Util.toDateTime(source.getCreated()))
             .updated(Util.toDateTime(source.getUpdated()))
             .expiration(Util.toDateTime(source.getExpiration()))
             .collected(source.isCollected())
             .revoked(source.isRevoked());
-
 
         return dest;
     }

@@ -16,6 +16,7 @@ package org.candlepin.resource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -52,7 +53,7 @@ import org.candlepin.common.paging.PageRequest;
 import org.candlepin.config.ConfigProperties;
 import org.candlepin.controller.CandlepinPoolManager;
 import org.candlepin.controller.ContentAccessManager;
-import org.candlepin.controller.ContentAccessManager.ContentAccessMode;
+import org.candlepin.controller.ContentManager;
 import org.candlepin.controller.ManifestManager;
 import org.candlepin.controller.OwnerManager;
 import org.candlepin.controller.PoolManager;
@@ -85,18 +86,15 @@ import org.candlepin.model.Consumer;
 import org.candlepin.model.ConsumerCurator;
 import org.candlepin.model.ConsumerType;
 import org.candlepin.model.ConsumerTypeCurator;
-import org.candlepin.model.Entitlement;
-import org.candlepin.model.EntitlementCurator;
-import org.candlepin.model.EnvironmentCurator;
-import org.candlepin.model.ExporterMetadataCurator;
 import org.candlepin.model.Content;
 import org.candlepin.model.Entitlement;
 import org.candlepin.model.EntitlementCurator;
 import org.candlepin.model.Environment;
+import org.candlepin.model.EnvironmentCurator;
+import org.candlepin.model.ExporterMetadataCurator;
 import org.candlepin.model.ImportRecord;
 import org.candlepin.model.ImportRecordCurator;
 import org.candlepin.model.Owner;
-import org.candlepin.model.OwnerContentCurator;
 import org.candlepin.model.OwnerCurator;
 import org.candlepin.model.OwnerInfoCurator;
 import org.candlepin.model.OwnerProductCurator;
@@ -120,6 +118,7 @@ import org.candlepin.resource.util.ConsumerTypeValidator;
 import org.candlepin.resource.util.ResolverUtil;
 import org.candlepin.resource.validation.DTOValidator;
 import org.candlepin.service.OwnerServiceAdapter;
+import org.candlepin.service.UniqueIdGenerator;
 import org.candlepin.service.impl.DefaultOwnerServiceAdapter;
 import org.candlepin.service.impl.ImportSubscriptionServiceAdapter;
 import org.candlepin.sync.ConflictOverrides;
@@ -162,17 +161,17 @@ import javax.persistence.PersistenceException;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MultivaluedMap;
 
+
 /**
  * OwnerResourceTest
  */
 public class OwnerResourceTest extends DatabaseTestFixture {
     private static final String OWNER_NAME = "Jar Jar Binks";
 
-    @Inject private ContentAccessManager contentAccessManager;
     @Inject private CandlepinPoolManager poolManager;
+    @Inject private ServiceLevelValidator serviceLevelValidator;
     @Inject private I18n i18n;
     @Inject private OwnerResource ownerResource;
-    @Inject private EventFactory eventFactory;
     @Inject private CalculatedAttributesUtil calculatedAttributesUtil;
     @Inject private Configuration config;
     @Inject private ContentOverrideValidator contentOverrideValidator;
@@ -180,40 +179,37 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Inject private UeberCertificateCurator ueberCertCurator;
     @Inject private DTOValidator dtoValidator;
 
-<<<<<<< HEAD
     // Mocks used to build the owner resource
     private ActivationKeyCurator mockActivationKeyCurator;
     private ConsumerCurator mockConsumerCurator;
     private ConsumerTypeCurator mockConsumerTypeCurator;
+    private ContentAccessManager mockContentAccessManager;
+    private ContentManager mockContentManager;
     private EntitlementCurator mockEntitlementCurator;
     private EnvironmentCurator mockEnvironmentCurator;
-    private ExporterMetadataCurator mockExportCurator;
-    private ImportRecordCurator mockImportRecordCurator;
-    private OwnerCurator mockOwnerCurator;
-    private OwnerInfoCurator mockOwnerInfoCurator;
-    private OwnerProductCurator mockOwnerProductCurator;
-    private ProductCurator mockProductCurator;
-    private UeberCertificateCurator mockUeberCertCurator;
-    private UeberCertificateGenerator mockUeberCertificateGenerator;
-
     private EventSink mockEventSink;
     private EventFactory mockEventFactory;
     private EventAdapter mockEventAdapter;
-
-    private ContentAccessManager mockContentAccessManager;
-    private ManifestManager mockManifestManager;
-    private OwnerManager mockOwnerManager;
-    private PoolManager mockPoolManager;
+    private ExporterMetadataCurator mockExportCurator;
     private JobManager mockJobManager;
+    private ImportRecordCurator mockImportRecordCurator;
+    private ManifestManager mockManifestManager;
+    private OwnerCurator mockOwnerCurator;
+    private OwnerManager mockOwnerManager;
+    private OwnerInfoCurator mockOwnerInfoCurator;
+    private OwnerProductCurator mockOwnerProductCurator;
+    private PoolManager mockPoolManager;
+    private ProductCertificateCurator mockProductCertCurator;
+    private ProductCurator mockProductCurator;
+    private ProductManager productManager;
+    private UeberCertificateCurator mockUeberCertCurator;
+    private UeberCertificateGenerator mockUeberCertificateGenerator;
+    private UniqueIdGenerator mockIdGenerator;
 
     private ResolverUtil resolverUtil;
     private OwnerServiceAdapter ownerServiceAdapter;
-    private ServiceLevelValidator serviceLevelValidator;
     private ConsumerTypeValidator consumerTypeValidator;
 
-=======
-    private JobManager jobManager;
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
     private Owner owner;
     private List<Owner> owners;
     private Product product;
@@ -224,10 +220,6 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
     @BeforeEach
     public void setUp() {
-<<<<<<< HEAD
-=======
-        this.jobManager = mock(JobManager.class);
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
         owner = ownerCurator.create(new Owner(OWNER_NAME));
         owners = new ArrayList<>();
         owners.add(owner);
@@ -237,7 +229,6 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         subscriptionIds = null;
         contracts = null;
 
-<<<<<<< HEAD
         // Setup mocks and other such things...
         this.mockActivationKeyCurator = mock(ActivationKeyCurator.class);
         this.mockConsumerCurator = mock(ConsumerCurator.class);
@@ -258,10 +249,14 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         this.mockEventAdapter = mock(EventAdapter.class);
 
         this.mockContentAccessManager = mock(ContentAccessManager.class);
+        this.mockContentManager = mock(ContentManager.class);
         this.mockManifestManager = mock(ManifestManager.class);
         this.mockOwnerManager = mock(OwnerManager.class);
+        this.mockProductCertCurator = mock(ProductCertificateCurator.class);
         this.mockPoolManager = mock(PoolManager.class);
+        this.productManager = mock(ProductManager.class);
         this.mockJobManager = mock(JobManager.class);
+        this.mockIdGenerator = mock(UniqueIdGenerator.class);
 
         this.resolverUtil = new ResolverUtil(this.i18n, this.mockOwnerCurator, this.mockOwnerProductCurator,
             this.mockProductCurator);
@@ -280,11 +275,12 @@ public class OwnerResourceTest extends DatabaseTestFixture {
             this.mockUeberCertificateGenerator, this.mockEnvironmentCurator, this.calculatedAttributesUtil,
             this.contentOverrideValidator, this.serviceLevelValidator, this.ownerServiceAdapter, this.config,
             this.resolverUtil, this.consumerTypeValidator, this.mockOwnerProductCurator, this.modelTranslator,
-            this.mockJobManager);
+            this.mockJobManager, this.dtoValidator, this.ownerContentCurator, this.mockIdGenerator,
+            this.mockContentManager, this.productManager, this.mockProductCertCurator,
+            this.mockProductCurator);
     }
 
     // TODO: This test does not belong here; it does not hit the resource at all
-=======
     private org.candlepin.dto.api.v1.ProductDTO buildTestProductDTO() {
         org.candlepin.dto.api.v1.ProductDTO dto = TestUtil.createProductDTO("test_product");
         dto.getAttributes().add(createAttribute(Product.Attributes.VERSION, "1.0"));
@@ -315,7 +311,6 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         product.getProductContent().add(content);
     }
 
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
     @Test
     public void testCreateOwner() {
         assertNotNull(owner);
@@ -338,6 +333,7 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
         List<SubscriptionDTO> subscriptions = new LinkedList<>();
         ImportSubscriptionServiceAdapter subAdapter = new ImportSubscriptionServiceAdapter(subscriptions);
+        OwnerServiceAdapter ownerAdapter = new DefaultOwnerServiceAdapter(this.ownerCurator, this.i18n);
 
         org.candlepin.dto.manifest.v1.OwnerDTO ownerDto =
             this.modelTranslator.translate(owner, org.candlepin.dto.manifest.v1.OwnerDTO.class);
@@ -1056,52 +1052,32 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         OwnerCurator oc = mock(OwnerCurator.class);
         Owner o = new Owner();
         o.setKey("owner-key");
-<<<<<<< HEAD
 
         when(this.mockOwnerCurator.getByKey(anyString())).thenReturn(o);
 
         OwnerResource resource = this.buildOwnerResource();
 
-=======
-        OwnerResource ownerres = new OwnerResource(
-            oc, null, null, i18n, null, null, null,
-            null, null, null, null, null,
-            null, null, null, null, null,
-            null, null, null, null, null,
-            null, null, null, this.modelTranslator, this.jobManager,
-            this.dtoValidator, null, null, null, null,
-            null, null);
         when(oc.getByKey(anyString())).thenReturn(o);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
         ActivationKeyDTO key = new ActivationKeyDTO();
         assertThrows(BadRequestException.class, () -> resource.createActivationKey(owner.getKey(), key));
     }
 
     @Test
     public void testActivationKeyTooLongRelease() {
+        OwnerCurator oc = mock(OwnerCurator.class);
         Owner o = new Owner();
         o.setKey("owner-key");
-<<<<<<< HEAD
 
         when(this.mockOwnerCurator.getByKey(anyString())).thenReturn(o);
-
         OwnerResource resource = this.buildOwnerResource();
 
-=======
-        OwnerResource ownerres = new OwnerResource(
-            oc, null, null, i18n, null, null, null,
-            null, null, null, null, null,
-            null, null, null, null,
-            null, null, null, null,
-            null, null, null, null, null,
-            this.modelTranslator, this.jobManager, this.dtoValidator, null,
-            null, null, null, null, null);
         when(oc.getByKey(anyString())).thenReturn(o);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
         ActivationKeyDTO key = new ActivationKeyDTO();
         key.releaseVer(new ReleaseVerDTO().releaseVer(TestUtil.getStringOfSize(256)));
 
-        assertThrows(BadRequestException.class, () -> resource.createActivationKey(owner.getKey(), key));
+        assertThrows(BadRequestException.class, () ->
+            resource.createActivationKey(owner.getKey(), key)
+        );
     }
 
     @Test
@@ -1464,25 +1440,11 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Test
     public void testConflictOnDelete() {
         Owner o = mock(Owner.class);
-<<<<<<< HEAD
-
         when(this.mockOwnerCurator.getByKey(eq("testOwner"))).thenReturn(o);
-=======
-        OwnerCurator oc = mock(OwnerCurator.class);
-        OwnerManager ownerManager = mock(OwnerManager.class);
-        EventFactory eventFactory = mock(EventFactory.class);
-        OwnerResource or = new OwnerResource(
-            oc, null, null, i18n, null, eventFactory, null, null, poolManager, ownerManager,  null,
-            null, null, null, null, null, null, null, contentOverrideValidator,
-            serviceLevelValidator, null, null, null, null, null,
-            this.modelTranslator, this.jobManager, null, null, null, null, null, null, null);
 
-        when(oc.getByKey(eq("testOwner"))).thenReturn(o);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
         ConstraintViolationException ce = new ConstraintViolationException(null, null, null);
         PersistenceException pe = new PersistenceException(ce);
         Mockito.doThrow(pe).when(this.mockOwnerManager).cleanupAndDelete(eq(o), eq(true));
-
         OwnerResource resource = this.buildOwnerResource();
 
         assertThrows(ConflictException.class, () -> resource.deleteOwner("testOwner", true, true));
@@ -1498,25 +1460,7 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         when(this.mockActivationKeyCurator.getByKeyName(eq(o), eq("testKey"))).thenReturn(akOld);
         when(this.mockOwnerCurator.getByKey(eq("testOwner"))).thenReturn(o);
 
-<<<<<<< HEAD
         OwnerResource resource = this.buildOwnerResource();
-=======
-        OwnerResource ownerres = new OwnerResource(
-<<<<<<< HEAD
-            oc, akc, null, i18n, null, null, null, null, null, null, null, null, null,
-            null, null, null, null,
-            null, contentOverrideValidator, null, null, null, null, null,
-            null, this.modelTranslator, this.jobManager, this.dtoValidator);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
-=======
-            oc, akc, null, i18n, null, null, null, null,
-            null, null, null, null, null,
-            null, null, null, null, null,
-            contentOverrideValidator, null, null, null,
-            null, null, null, this.modelTranslator, this.jobManager,
-            this.dtoValidator, null, null, null, null,
-            null, null);
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
 
         assertThrows(BadRequestException.class, () -> resource.createActivationKey("testOwner", ak));
     }
@@ -1648,23 +1592,11 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Test
     public void testImportManifestSynchronousSuccess() throws IOException, ImporterException {
         OwnerResource thisOwnerResource = new OwnerResource(
-<<<<<<< HEAD
-            ownerCurator, null, null, i18n, this.mockEventSink, eventFactory, null, null,
+            ownerCurator, null, null, i18n, this.mockEventSink, mockEventFactory, null, null,
             this.mockManifestManager, null, null, null, null, importRecordCurator, null, null, null, null,
             null, contentOverrideValidator, serviceLevelValidator, null, null, null, null, null,
-            this.modelTranslator, this.mockJobManager);
-=======
-            ownerCurator, null, null, i18n, es, eventFactory, null,
-            manifestManager, null, null, null,
-            null, importRecordCurator, null, null, null, null, null, contentOverrideValidator,
-            serviceLevelValidator, null, null, null, null,
-<<<<<<< HEAD
-            null, this.modelTranslator, this.jobManager, null);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
-=======
-            null, this.modelTranslator, this.jobManager, null, null, null, null, null, null, null);
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
-
+            this.modelTranslator, this.mockJobManager, null, null,
+            null, null, null, null , null);
         MultipartInput input = mock(MultipartInput.class);
         InputPart part = mock(InputPart.class);
         File archive = mock(File.class);
@@ -1693,22 +1625,11 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Test
     public void testImportManifestAsyncSuccess() throws IOException, ImporterException, JobException {
         OwnerResource thisOwnerResource = new OwnerResource(
-<<<<<<< HEAD
-            this.mockOwnerCurator, null, null, i18n, this.mockEventSink, eventFactory, null, null,
+            this.mockOwnerCurator, null, null, i18n, this.mockEventSink, mockEventFactory, null, null,
             this.mockManifestManager, null, null, null, null, importRecordCurator, null, null, null, null,
             null, contentOverrideValidator, serviceLevelValidator, null, null, null, null, null,
-            this.modelTranslator, this.mockJobManager);
-=======
-            oc, null, null, i18n, es, eventFactory, null,
-            manifestManager, null, null, null,
-            null, importRecordCurator, null, null, null, null, null, contentOverrideValidator,
-            serviceLevelValidator, null, null, null, null,
-<<<<<<< HEAD
-            null, this.modelTranslator, jm, null);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
-=======
-            null, this.modelTranslator, jm, null, null, null, null, null, null, null);
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
+            this.modelTranslator, this.mockJobManager, null, null,
+            null, null, null, null , null);
 
         MultipartInput input = mock(MultipartInput.class);
         InputPart part = mock(InputPart.class);
@@ -1749,22 +1670,13 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     @Test
     public void testImportManifestFailure() throws IOException, ImporterException {
         OwnerResource thisOwnerResource = new OwnerResource(
-<<<<<<< HEAD
-            ownerCurator, null, null, i18n, this.mockEventSink, eventFactory, null, contentAccessManager,
-            this.mockManifestManager, null, null, null, null, importRecordCurator, null, null, null, null,
-            null, contentOverrideValidator, serviceLevelValidator, null, null, null, null, null,
-            this.modelTranslator, this.mockJobManager);
-=======
-            ownerCurator, null, null, i18n, es, eventFactory, null,
-            manifestManager, null, null, null,
-            null, importRecordCurator, null, null, null, null, null, contentOverrideValidator,
+            ownerCurator, null, null, i18n, this.mockEventSink, mockEventFactory,
+            null, mockContentAccessManager, this.mockManifestManager, null, null,
+            null, null, importRecordCurator, null, null,
+            null, null, null, contentOverrideValidator,
             serviceLevelValidator, null, null, null, null,
-<<<<<<< HEAD
-            null, this.modelTranslator, this.jobManager, null);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
-=======
-            null, this.modelTranslator, this.jobManager, null, null, null, null, null, null, null);
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
+            null, this.modelTranslator, this.mockJobManager, null, null,
+            null, null, null, null , null);
 
         MultipartInput input = mock(MultipartInput.class);
         InputPart part = mock(InputPart.class);
@@ -1798,40 +1710,15 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
     @Test
     public void upstreamConsumers() {
-        Owner owner = mock(Owner.class);
         Principal p = mock(Principal.class);
         UpstreamConsumer upstream = mock(UpstreamConsumer.class);
-<<<<<<< HEAD
-=======
         Owner owner = mock(Owner.class);
-        OwnerResource ownerres = new OwnerResource(
-            oc, null, null, i18n, null, null, null,
-            null, null, null, null, null,
-            null, null, null, null,
-            null, null, contentOverrideValidator, serviceLevelValidator, null,
-<<<<<<< HEAD
-            null, null, null, null, this.modelTranslator, this.jobManager, null);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         OwnerResource resource = this.buildOwnerResource();
-=======
-            null, null, null, null, this.modelTranslator,
-            this.jobManager, null, null, null, null,
-            null, null, null);
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
-
         when(this.mockOwnerCurator.getByKey(eq("admin"))).thenReturn(owner);
         when(owner.getUpstreamConsumer()).thenReturn(upstream);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         List<UpstreamConsumerDTO> results = resource.getUpstreamConsumers(p, "admin");
-=======
-        List<UpstreamConsumerDTOArrayElement> results = ownerres.getUpstreamConsumers(p, "admin");
->>>>>>> ENT-1861: Port OwnerDTO to openapi spec
-=======
-        List<UpstreamConsumerDTO> results = ownerres.getUpstreamConsumers(p, "admin");
->>>>>>> ENT-1861: Port OwnerDTO to openapi spec (FIX)
 
         assertNotNull(results);
         assertEquals(1, results.size());
@@ -2033,18 +1920,8 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         Page<List<Entitlement>> page = new Page<>();
         page.setPageData(entitlements);
 
-<<<<<<< HEAD
         List<EntitlementDTO> result = this.ownerResource
             .ownerEntitlements(owner.getKey(), null, null, null, req);
-=======
-        OwnerResource ownerres = new OwnerResource(
-            this.ownerCurator, null, null, i18n, null, null, null,
-            null, null, null, null, null, null, this.entitlementCurator,
-            null, null, null, null, null, null, null, null, null, null,
-            null, this.modelTranslator, this.jobManager, null, null, null, null, null, null, null);
-
-        List<EntitlementDTO> result = ownerres.ownerEntitlements(owner.getKey(), null, null, null, req);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         assertEquals(1, result.size());
         assertEquals(e.getId(), result.get(0).getId());
@@ -2056,19 +1933,7 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         req.setPage(1);
         req.setPerPage(10);
 
-<<<<<<< HEAD
         OwnerResource resource = this.buildOwnerResource();
-=======
-        OwnerCurator oc = mock(OwnerCurator.class);
-        OwnerResource ownerres = new OwnerResource(
-            oc, null, null, i18n, null, null, null, null, null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null,
-<<<<<<< HEAD
-            null, this.modelTranslator, this.jobManager, null);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
-=======
-            null, this.modelTranslator, this.jobManager, null, null, null, null, null, null, null);
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
 
         assertThrows(NotFoundException.class, () ->
             resource.ownerEntitlements("Taylor Swift", null, null, null, req)
@@ -2084,19 +1949,8 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         when(this.mockOwnerCurator.getByKey(eq("admin")))
             .thenReturn(owner);
 
-<<<<<<< HEAD
         when(this.mockUeberCertificateGenerator.generate(eq(owner.getKey()), eq(principal)))
             .thenReturn(entCert);
-=======
-        OwnerResource resource = new OwnerResource(
-            oc, null, cc, i18n, null, null, null, null, cpm, null, null, null, null, ec,
-            uc, ucg, null, null, null, null, null, null, null, null,
-<<<<<<< HEAD
-            null, this.modelTranslator, this.jobManager, null);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
-=======
-            null, this.modelTranslator, this.jobManager, null, null, null, null, null, null, null);
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
 
         OwnerResource resource = this.buildOwnerResource();
 
@@ -2113,17 +1967,8 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
         OwnerResource resource = this.buildOwnerResource();
 
-<<<<<<< HEAD
         when(this.mockUeberCertificateGenerator.generate(eq(owner.getKey()), eq(principal)))
             .thenReturn(entCert);
-=======
-        OwnerResource resource = new OwnerResource(
-            oc, null, cc, i18n, null, null, null, null, cpm, null, null, null, null, ec,
-            uc, ucg, null, null, null, null, null, null, null, null,
-            null, this.modelTranslator, this.jobManager, null, null, null, null, null, null, null);
-
-        when(ucg.generate(eq(owner.getKey()), eq(principal))).thenReturn(entCert);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         UeberCertificateDTO expected = this.modelTranslator.translate(entCert, UeberCertificateDTO.class);
         UeberCertificateDTO result = resource.createUeberCertificate(principal, owner.getKey());
@@ -2135,14 +1980,7 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testReturnProductSysPurposeValuesForOwner() throws Exception {
         Owner owner = TestUtil.createOwner();
 
-<<<<<<< HEAD
         OwnerResource resource = this.buildOwnerResource();
-=======
-        OwnerResource resource = new OwnerResource(oc, null, null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-            opc, this.modelTranslator, this.jobManager, null, null, null, null, null, null, null
-        );
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         when(this.mockOwnerCurator.getByKey(eq(owner.getKey())))
             .thenReturn(owner);
@@ -2168,15 +2006,9 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
         SystemPurposeAttributesDTO result = resource.getSyspurpose(owner.getKey());
 
-<<<<<<< HEAD
-        assertEquals(modelTranslator.translate(owner, OwnerDTO.class), result.getOwner());
-        Set<String> addons = result.getSystemPurposeAttributes()
-            .get(SystemPurposeAttributeType.ADDONS.toString());
-=======
         assertEquals(modelTranslator.translate(owner, NestedOwnerDTO.class), result.getOwner());
         Set<String> addons =
             result.getSystemPurposeAttributes().get(SystemPurposeAttributeType.ADDONS.toString());
->>>>>>> ENT-1861: Port OwnerDTO to openapi spec
         Set<String> expectedAddOns = new HashSet<>(Arrays.asList("hello", "earth", "world"));
         assertEquals(expectedAddOns, addons);
 
@@ -2190,17 +2022,8 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testReturnConsumerSysPurposeValuesForOwner() throws Exception {
         Owner owner = TestUtil.createOwner();
 
-<<<<<<< HEAD
         when(this.mockOwnerCurator.getByKey(eq(owner.getKey())))
             .thenReturn(owner);
-=======
-        OwnerResource resource = new OwnerResource(oc, null, cc, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-            this.modelTranslator, this.jobManager, null, null, null, null, null, null, null
-        );
-
-        when(oc.getByKey(eq(owner.getKey()))).thenReturn(owner);
->>>>>>> ENT-1846: Port ActivationKeyDTO to openapi spec
 
         List<String> mockRoles = new ArrayList<>();
         mockRoles.add("role1");
@@ -2235,15 +2058,9 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
         SystemPurposeAttributesDTO result = resource.getConsumersSyspurpose(owner.getKey());
 
-<<<<<<< HEAD
-        assertEquals(modelTranslator.translate(owner, OwnerDTO.class), result.getOwner());
-        Set<String> addons = result.getSystemPurposeAttributes()
-            .get(SystemPurposeAttributeType.ADDONS.toString());
-=======
         assertEquals(modelTranslator.translate(owner, NestedOwnerDTO.class), result.getOwner());
         Set<String> addons =
             result.getSystemPurposeAttributes().get(SystemPurposeAttributeType.ADDONS.toString());
->>>>>>> ENT-1861: Port OwnerDTO to openapi spec
         Set<String> expectedAddOns = new HashSet<>(Arrays.asList("addon1", "addon2", "addon3"));
         assertEquals(expectedAddOns, addons);
 
@@ -2264,19 +2081,18 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         assertEquals(expectedSLAs, serviceLevelAgreements);
     }
 
-<<<<<<< HEAD
     @Test
     public void testCreateOwnerSetContentAccessListAndMode() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         OwnerDTO changes = new OwnerDTO()
-            .setKey("test_owner")
-            .setDisplayName("test_owner")
-            .setContentAccessModeList(entitlementMode + "," + orgEnvMode)
-            .setContentAccessMode(orgEnvMode);
+            .key("test_owner")
+            .displayName("test_owner")
+            .contentAccessModeList(entitlementMode + "," + orgEnvMode)
+            .contentAccessMode(orgEnvMode);
 
         OwnerDTO output = this.ownerResource.createOwner(changes);
 
@@ -2290,13 +2106,13 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testCreateOwnerSetContentAccessList() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         OwnerDTO changes = new OwnerDTO()
-            .setKey("test_owner")
-            .setDisplayName("test_owner")
-            .setContentAccessModeList(entitlementMode + "," + orgEnvMode);
+            .key("test_owner")
+            .displayName("test_owner")
+            .contentAccessModeList(entitlementMode + "," + orgEnvMode);
 
         OwnerDTO output = this.ownerResource.createOwner(changes);
 
@@ -2310,13 +2126,12 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testCreateOwnerSetContentAccessModeCannotUseInvalidModeInList() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
 
         OwnerDTO changes = new OwnerDTO()
-            .setKey("test_owner")
-            .setDisplayName("test_owner")
-            .setContentAccessModeList(entitlementMode + ",unsupported_mode");
+            .key("test_owner")
+            .displayName("test_owner")
+            .contentAccessModeList(entitlementMode + ",unsupported_mode");
 
         assertThrows(BadRequestException.class, () -> ownerResource.createOwner(changes));
     }
@@ -2325,14 +2140,14 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testCreateOwnerSetContentAccessModeCannotUseInvalidMode() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         OwnerDTO changes = new OwnerDTO()
-            .setKey("test_owner")
-            .setDisplayName("test_owner")
-            .setContentAccessModeList(entitlementMode)
-            .setContentAccessMode(orgEnvMode);
+            .key("test_owner")
+            .displayName("test_owner")
+            .contentAccessModeList(entitlementMode)
+            .contentAccessMode(orgEnvMode);
 
         assertThrows(BadRequestException.class, () -> ownerResource.createOwner(changes));
     }
@@ -2341,13 +2156,12 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testCreateOwnerSetContentAccessModeCannotUseImpliedDefault() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         OwnerDTO changes = new OwnerDTO()
-            .setKey("test_owner")
-            .setDisplayName("test_owner")
-            .setContentAccessModeList(orgEnvMode);
+            .key("test_owner")
+            .displayName("test_owner")
+            .contentAccessModeList(orgEnvMode);
 
         // This should fail since creation requires that we specify the values, even if those
         // values are defaults. As such, the default value of entitlement should not be allowed
@@ -2360,14 +2174,13 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testCreateOwnerCannotUseNonDefaultContentAccessModeInStandalone() {
         this.config.setProperty(ConfigProperties.STANDALONE, "true");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         OwnerDTO changes = new OwnerDTO()
-            .setKey("test_owner")
-            .setDisplayName("test_owner")
-            .setContentAccessModeList(orgEnvMode)
-            .setContentAccessMode(orgEnvMode);
+            .key("test_owner")
+            .displayName("test_owner")
+            .contentAccessModeList(orgEnvMode)
+            .contentAccessMode(orgEnvMode);
 
         assertThrows(BadRequestException.class, () -> ownerResource.createOwner(changes));
     }
@@ -2376,13 +2189,13 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testCreateOwnerCanSetNonDefaultContentAccessModeListInStandalone() {
         this.config.setProperty(ConfigProperties.STANDALONE, "true");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         OwnerDTO changes = new OwnerDTO()
-            .setKey("test_owner")
-            .setDisplayName("test_owner")
-            .setContentAccessModeList(entitlementMode + "," + orgEnvMode);
+            .key("test_owner")
+            .displayName("test_owner")
+            .contentAccessModeList(entitlementMode + "," + orgEnvMode);
 
         OwnerDTO output = this.ownerResource.createOwner(changes);
 
@@ -2396,15 +2209,15 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testSetContentAccessModeList() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         Owner owner = this.ownerCurator.create(new Owner("test_owner", "test_owner")
             .setContentAccessModeList(entitlementMode)
             .setContentAccessMode(entitlementMode));
 
         OwnerDTO changes = new OwnerDTO()
-            .setContentAccessModeList(entitlementMode + "," + orgEnvMode);
+            .contentAccessModeList(entitlementMode + "," + orgEnvMode);
 
         OwnerDTO output = this.ownerResource.updateOwner(owner.getKey(), changes);
 
@@ -2418,15 +2231,15 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testSetContentAccessMode() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         Owner owner = this.ownerCurator.create(new Owner("test_owner", "test_owner")
             .setContentAccessModeList(entitlementMode + "," + orgEnvMode)
             .setContentAccessMode(entitlementMode));
 
         OwnerDTO changes = new OwnerDTO()
-            .setContentAccessMode(orgEnvMode);
+            .contentAccessMode(orgEnvMode);
 
         OwnerDTO output = this.ownerResource.updateOwner(owner.getKey(), changes);
 
@@ -2440,16 +2253,16 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testSetContentAccessModeListAndMode() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         Owner owner = this.ownerCurator.create(new Owner("test_owner", "test_owner")
             .setContentAccessModeList(entitlementMode)
             .setContentAccessMode(entitlementMode));
 
         OwnerDTO changes = new OwnerDTO()
-            .setContentAccessModeList(entitlementMode + "," + orgEnvMode)
-            .setContentAccessMode(orgEnvMode);
+            .contentAccessModeList(entitlementMode + "," + orgEnvMode)
+            .contentAccessMode(orgEnvMode);
 
         OwnerDTO output = this.ownerResource.updateOwner(owner.getKey(), changes);
 
@@ -2463,15 +2276,14 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testSetContentAccessModeCannotUseInvalidModeInList() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
 
         Owner owner = this.ownerCurator.create(new Owner("test_owner", "test_owner")
             .setContentAccessModeList(entitlementMode)
             .setContentAccessMode(entitlementMode));
 
         OwnerDTO changes = new OwnerDTO()
-            .setContentAccessModeList(entitlementMode + ",unsupported_mode");
+            .contentAccessModeList(entitlementMode + ",unsupported_mode");
 
         assertThrows(BadRequestException.class, () -> ownerResource.updateOwner(owner.getKey(), changes));
     }
@@ -2480,15 +2292,15 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testSetContentAccessModeCannotUseInvalidMode() {
         this.config.setProperty(ConfigProperties.STANDALONE, "false");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         Owner owner = this.ownerCurator.create(new Owner("test_owner", "test_owner")
             .setContentAccessModeList(entitlementMode)
             .setContentAccessMode(entitlementMode));
 
         OwnerDTO changes = new OwnerDTO()
-            .setContentAccessMode(orgEnvMode);
+            .contentAccessMode(orgEnvMode);
 
         assertThrows(BadRequestException.class, () -> ownerResource.updateOwner(owner.getKey(), changes));
     }
@@ -2497,15 +2309,15 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testUpdateCannotChangeContentAccessModeInStandalone() {
         this.config.setProperty(ConfigProperties.STANDALONE, "true");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         Owner owner = this.ownerCurator.create(new Owner("test_owner", "test_owner")
             .setContentAccessModeList(entitlementMode)
             .setContentAccessMode(entitlementMode));
 
         OwnerDTO changes = new OwnerDTO()
-            .setContentAccessMode(orgEnvMode);
+            .contentAccessMode(orgEnvMode);
 
         assertThrows(BadRequestException.class, () -> ownerResource.updateOwner(owner.getKey(), changes));
     }
@@ -2514,18 +2326,18 @@ public class OwnerResourceTest extends DatabaseTestFixture {
     public void testUpdateCannotChangeContentAccessModeListInStandalone() {
         this.config.setProperty(ConfigProperties.STANDALONE, "true");
 
-        String entitlementMode = ContentAccessMode.ENTITLEMENT.toDatabaseValue();
-        String orgEnvMode = ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
+        String entitlementMode = ContentAccessManager.ContentAccessMode.ENTITLEMENT.toDatabaseValue();
+        String orgEnvMode = ContentAccessManager.ContentAccessMode.ORG_ENVIRONMENT.toDatabaseValue();
 
         Owner owner = this.ownerCurator.create(new Owner("test_owner", "test_owner")
             .setContentAccessModeList(entitlementMode)
             .setContentAccessMode(entitlementMode));
 
         OwnerDTO changes = new OwnerDTO()
-            .setContentAccessModeList(orgEnvMode);
+            .contentAccessModeList(orgEnvMode);
 
         assertThrows(BadRequestException.class, () -> ownerResource.updateOwner(owner.getKey(), changes));
-=======
+    }
     //
     // Tests related to Owner Content
     //
@@ -2844,32 +2656,29 @@ public class OwnerResourceTest extends DatabaseTestFixture {
 
     @Test
     public void testDeleteProductWithSubscriptions() {
-        OwnerCurator oc = mock(OwnerCurator.class);
-        OwnerProductCurator opc = mock(OwnerProductCurator.class);
-        ProductCurator pc = mock(ProductCurator.class);
         I18n i18n = I18nFactory.getI18n(getClass(), Locale.US, I18nFactory.FALLBACK);
 
-        OwnerResource ownerres = new OwnerResource(
-            oc, null, null, i18n, null, null, null,
+        OwnerResource resource = new OwnerResource(
+            this.mockOwnerCurator, null, null, i18n, null, null, null,
             null, null, null, null, null,
             null, null, null, null, null,
             null, null, null, null, null,
-            null, null, opc, this.modelTranslator, this.jobManager,
-            this.dtoValidator, mock(OwnerContentCurator.class), null, null, mock(ProductManager.class),
-            mock(ProductCertificateCurator.class), pc);
+            null, null, null, this.mockOwnerProductCurator, this.modelTranslator, this.mockJobManager,
+            this.dtoValidator, this.ownerContentCurator, null, null, this.productManager,
+            this.mockProductCertCurator, this.mockProductCurator);
 
         Owner o = mock(Owner.class);
         Product p = mock(Product.class);
 
-        when(oc.getByKey(eq("owner"))).thenReturn(o);
-        when(opc.getProductById(eq(o), eq("10"))).thenReturn(p);
+        when(this.mockOwnerCurator.getByKey(eq("owner"))).thenReturn(o);
+        when(this.mockOwnerProductCurator.getProductById(eq(o), eq("10"))).thenReturn(p);
 
         Set<Subscription> subs = new HashSet<>();
         Subscription s = mock(Subscription.class);
         subs.add(s);
-        when(pc.productHasSubscriptions(eq(o), eq(p))).thenReturn(true);
+        when(this.mockProductCurator.productHasSubscriptions(eq(o), eq(p))).thenReturn(true);
 
-        assertThrows(BadRequestException.class, () -> ownerres.deleteProductByOwner("owner", "10"));
+        assertThrows(BadRequestException.class, () -> resource.deleteProductByOwner("owner", "10"));
     }
 
     @Test
@@ -2953,6 +2762,5 @@ public class OwnerResourceTest extends DatabaseTestFixture {
         assertThrows(BadRequestException.class, () ->
             ownerResource.getProductCertificateByOwner(owner.getKey(), entity.getId())
         );
->>>>>>> ENT-1880: Port OwnerProductResource to spec-first
     }
 }

@@ -146,7 +146,6 @@ import org.candlepin.resteasy.AnnotationLocator;
 import org.candlepin.resteasy.DateFormatter;
 import org.candlepin.resteasy.JsonProvider;
 import org.candlepin.resteasy.MethodLocator;
-import org.candlepin.resteasy.ResourceLocatorMap;
 import org.candlepin.resteasy.converter.KeyValueParamConverterProvider;
 import org.candlepin.resteasy.converter.OffsetDateTimeParamConverterProvider;
 import org.candlepin.resteasy.filter.AuthenticationFilter;

@@ -161,7 +161,7 @@ public class HypervisorResourceTest {
 
         this.hypervisorResource = new HypervisorResource(consumerResource,
             consumerCurator, consumerTypeCurator, i18n, ownerCurator, migrationProvider, modelTranslator,
-            guestIdResource, jobManager, principalProvider);
+            guestIdResource, jobManager, principalProvider, new ObjectMapper());
 
         // Ensure that we get the consumer that was passed in back from the create call.
         when(consumerCurator.create(any(Consumer.class)))
@@ -371,7 +371,8 @@ public class HypervisorResourceTest {
     @SuppressWarnings("deprecation")
     @Test
     public void ensureBadRequestWhenNoMappingIsIncludedInRequest() {
-        hypervisorResource.hypervisorUpdate("an-owner", null, false);
+        assertThrows(BadRequestException.class,
+            () -> hypervisorResource.hypervisorUpdate("an-owner", null, false));
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked", "deprecation" })
@@ -473,25 +474,7 @@ public class HypervisorResourceTest {
         assertNotNull(result.getCreated());
         List<HypervisorConsumerDTO> created = new ArrayList<>(result.getCreated());
         assertEquals(1, created.size());
+        assertEquals(0, hostGuestMap.get("HYPERVISOR_A").size());
     }
 
-    @Test
-    public void ensureFailureWhenAutobindIsDisabledOnOwner() {
-        Owner owner = new Owner("test_admin");
-        owner.setId("admin-id");
-        owner.setAutobindDisabled(true);
-
-        Map<String, List<String>> hostGuestMap = new HashMap<>();
-        hostGuestMap.put("HYPERVISOR_A", new ArrayList<>());
-        when(ownerCurator.getByKey(eq(owner.getKey()))).thenReturn(owner);
-
-        try {
-            hypervisorResource.hypervisorUpdate(owner.getKey(), hostGuestMap, true);
-            fail("Exception should have been thrown since autobind was disabled for the owner.");
-        }
-        catch (BadRequestException bre) {
-            assertEquals("Could not update host/guest mapping. Auto-attach is disabled for owner test_admin.",
-                bre.getMessage());
-        }
-    }
 }

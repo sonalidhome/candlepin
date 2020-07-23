@@ -14,8 +14,6 @@
  */
 package org.candlepin.policy.js;
 
-import static org.junit.Assert.assertFalse;
-
 import org.candlepin.dto.rules.v1.ComplianceStatusDTO;
 import org.candlepin.jackson.ProductCachedSerializationModule;
 import org.candlepin.model.Owner;

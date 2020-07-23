@@ -139,8 +139,6 @@ public class CdnResource implements CdnApi {
                         new Date(expiration.toInstant().toEpochMilli()) : null);
 
                     if (certSerialDTO.getSerial() != null) {
-                        //ToDo: REmove this dependancy of string
-                        /*certSerial.setSerial(certSerialDTO.getSerial().longValue());*/
                         certSerial.setSerial(Long.valueOf(certSerialDTO.getSerial()));
                     }
 

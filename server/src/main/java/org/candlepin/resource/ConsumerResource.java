@@ -118,7 +118,6 @@ import org.candlepin.resource.util.GuestMigration;
 import org.candlepin.resource.util.ResourceDateParser;
 import org.candlepin.resource.validation.DTOValidator;
 import org.candlepin.resteasy.DateFormat;
-import org.candlepin.service.ContentAccessCertServiceAdapter;
 import org.candlepin.service.EntitlementCertServiceAdapter;
 import org.candlepin.service.IdentityCertServiceAdapter;
 import org.candlepin.service.SubscriptionServiceAdapter;
@@ -755,10 +754,11 @@ public class ConsumerResource {
         // fix for duplicate hypervisor/consumer problem
         Consumer consumer = null;
         if (config.getBoolean(ConfigProperties.USE_SYSTEM_UUID_FOR_MATCHING) &&
-            dto.getFact(Consumer.Facts.SYSTEM_UUID) != null &&
-            !"true".equalsIgnoreCase(dto.getFact("virt.is_guest"))) {
+            getFactValue(dto.getFacts(), Consumer.Facts.SYSTEM_UUID) != null &&
+            !"true".equalsIgnoreCase(getFactValue(dto.getFacts(), "virt.is_guest"))) {
 
-            consumer = consumerCurator.getHypervisor(dto.getFact(Consumer.Facts.SYSTEM_UUID), owner);
+            consumer = consumerCurator.getHypervisor(getFactValue(dto.getFacts(),
+                Consumer.Facts.SYSTEM_UUID), owner);
             if (consumer != null) {
                 consumer.setIdCert(generateIdCert(consumer, false));
                 this.updateConsumer(consumer.getUuid(), dto, principal);
@@ -1981,23 +1981,15 @@ public class ConsumerResource {
 
         List<CertificateSerialDTO> allCerts = new LinkedList<>();
         for (Long id : entCertService.listEntitlementSerialIds(consumer)) {
-            //ToDo: REmove this dependancy of string
-            /*allCerts.add(new CertificateSerialDTO().setSerial(BigInteger.valueOf(id)));*/
-
-            allCerts.add(new CertificateSerialDTO().serial(id.toString()));
+            allCerts.add(new CertificateSerialDTO().serial(Long.valueOf(id.longValue())));
         }
 
         // add content access cert if needed
         try {
             ContentAccessCertificate cac = this.contentAccessManager.getCertificate(consumer);
             if (cac != null) {
-                //ToDo: REmove this dependancy of string
-                /*allCerts.add(new CertificateSerialDTO().setSerial(
-                    BigInteger.valueOf(cac.getSerial().getId())));*/
-
-
-                allCerts.add(new CertificateSerialDTO().serial(cac.getSerial().getId().toString()));
-
+                allCerts.add(new CertificateSerialDTO().serial(
+                    Long.valueOf(cac.getSerial().getId().longValue())));
             }
         }
         catch (IOException ioe) {

@@ -16,7 +16,6 @@ package org.candlepin.dto.api.v1;
 
 import org.candlepin.dto.AbstractDTOTest;
 
-import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,12 +34,8 @@ public class UeberCertificateDTOTest extends AbstractDTOTest<UeberCertificateDTO
         super(UeberCertificateDTO.class);
 
         CertificateSerialDTO serial = new CertificateSerialDTO();
-        //ToDo: REmove this dependancy of string
         serial.setId(123L);
-        /*serial.setSerial(BigInteger.TEN);
-        serial.setExpiration(new Date());
-        serial.setId("123");*/
-        serial.setSerial(BigInteger.TEN.toString());
+        serial.setSerial(10L);
         serial.setExpiration(OffsetDateTime.now());
         serial.setCollected(true);
         serial.setRevoked(true);

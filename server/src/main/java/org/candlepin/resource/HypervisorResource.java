@@ -93,7 +93,8 @@ public class HypervisorResource implements HypervisorsApi {
     public HypervisorResource(ConsumerResource consumerResource, ConsumerCurator consumerCurator,
         ConsumerTypeCurator consumerTypeCurator, I18n i18n, OwnerCurator ownerCurator,
         Provider<GuestMigration> migrationProvider, ModelTranslator translator,
-        GuestIdResource guestIdResource, JobManager jobManager, PrincipalProvider principalProvider) {
+        GuestIdResource guestIdResource, JobManager jobManager, PrincipalProvider principalProvider,
+        @Named("HypervisorUpdateJobObjectMapper") final ObjectMapper mapper) {
         this.consumerResource = consumerResource;
         this.consumerCurator = consumerCurator;
         this.consumerTypeCurator = consumerTypeCurator;
@@ -128,25 +129,25 @@ public class HypervisorResource implements HypervisorsApi {
 
         log.debug("Hypervisor check-in by principal: {}", principal);
 
-        if (hostGuestDTOMap == null) {
+        if (hostGuestMap == null) {
             log.debug("Host/Guest mapping provided during hypervisor checkin was null.");
             throw new BadRequestException(
                 i18n.tr("Host to guest mapping was not provided for hypervisor check-in."));
         }
 
         Owner owner = this.getOwner(ownerKey);
-        if (hostGuestDTOMap.remove("") != null) {
+        if (hostGuestMap.remove("") != null) {
             log.warn("Ignoring empty hypervisor id");
         }
 
         // Maps virt hypervisor ID to registered consumer for that hypervisor, should one exist:
         VirtConsumerMap hypervisorConsumersMap =
-            consumerCurator.getHostConsumersMap(owner, hostGuestDTOMap.keySet());
+            consumerCurator.getHostConsumersMap(owner, hostGuestMap.keySet());
 
         int emptyGuestIdCount = 0;
         Set<String> allGuestIds = new HashSet<>();
 
-        Collection<List<String>> idsLists = hostGuestDTOMap.values();
+        Collection<List<String>> idsLists = hostGuestMap.values();
         for (List<String> guestIds : idsLists) {
             // ignore null guest lists
             // See bzs 1332637, 1332635
@@ -171,7 +172,7 @@ public class HypervisorResource implements HypervisorsApi {
         }
 
         HypervisorUpdateResultDTO result = new HypervisorUpdateResultDTO();
-        for (Entry<String, List<String>> hostEntry : hostGuestDTOMap.entrySet()) {
+        for (Entry<String, List<String>> hostEntry : hostGuestMap.entrySet()) {
             String hypervisorId = hostEntry.getKey();
             // Treat null guest list as an empty list.
             // We can get an empty list here from katello due to an update
