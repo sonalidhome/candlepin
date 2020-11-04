@@ -4,7 +4,7 @@
 # John Sefler <jsefler@redhat.com>, 2016. #zanata
 # John Sefler <jsefler@redhat.com>, 2017. #zanata
 msgid ""
-msgstr ""
+msgstr "'"
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-08-05 14:41+0200\n"
