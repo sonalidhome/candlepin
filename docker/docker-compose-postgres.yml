@@ -11,7 +11,7 @@ services:
       #POSTGRES_DB: candlepin
       POSTGRES_INITDB_ARGS: "--auth='ident' --auth='trust'"
   candlepin:
-    image: ${REGISTRY}/candlepin-base
+    image: candlepin-base
     environment:
       USING_POSTGRES: "true"
       DBHOSTNAME: db

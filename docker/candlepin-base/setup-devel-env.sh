@@ -64,7 +64,7 @@ export HOME=/root
 export JAVA_HOME=/usr/lib/jvm/java-$JAVA_VERSION
 BASHRC
 
-git clone https://github.com/candlepin/candlepin.git /candlepin
+git clone https://github.com/sonalidhome/candlepin.git /candlepin
 cd /candlepin
 
 # Setup and install rvm, ruby and pals
