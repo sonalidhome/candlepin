@@ -58,6 +58,10 @@ pipeline {
                     }
                     steps { sh 'python jenkins/check_pr_branch.py $CHANGE_ID' }
                 }
+                stage('validate-translation') {
+                    agent { label 'docker' }
+                    steps { sh 'sh jenkins/candlepin-validate-text.sh' }
+                }
             }
         }
     }
