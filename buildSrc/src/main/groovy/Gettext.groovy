@@ -108,5 +108,27 @@ class Gettext implements Plugin<Project> {
                 }
             }
         }
+
+        def msgattrib_task = project.task('msgattrib') {
+            description = 'The msgattrib program filters the messages of a translation catalog according to their attributes, and manipulates the attributes.'
+            group = 'build'
+            doLast {
+                def po_files = new FileNameFinder().getFileNames("${extension.keys_project_dir}/po/", '*.po')
+                po_files.each {
+                    def msgattrib_args = ['--set-obsolete', '--ignore-file=common/po/keys.pot','-o', it, it]
+                    project.exec {
+                        executable "msgattrib"
+                        args msgattrib_args
+                        workingDir project.getRootDir()
+                    }
+                    msgattrib_args = ['--no-obsolete', '-o', it, it]
+                    project.exec {
+                        executable "msgattrib"
+                        args msgattrib_args
+                        workingDir project.getRootDir()
+                    }
+                }
+            }
+        }
     }
 }
