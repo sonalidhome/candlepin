@@ -4,6 +4,9 @@ pipeline {
         skipDefaultCheckout true
     }
     stages {
+        stage('Trust') {
+            enforceTrustedApproval
+        }
         stage('Test') {
             parallel {
                 stage('unit') {
