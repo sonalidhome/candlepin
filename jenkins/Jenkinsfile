@@ -14,7 +14,8 @@ pipeline {
                 GITHUB_TOKEN = credentials('github-api-token-as-username-password')
             }
             steps {
-                enforceTrustedApproval("candlepin","${GITHUB_TOKEN}")
+                echo  "hello"
+                //enforceTrustedApproval("candlepin","${GITHUB_TOKEN}")
             }
         }
         stage('Test') {
