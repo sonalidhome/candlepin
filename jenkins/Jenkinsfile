@@ -15,7 +15,8 @@ pipeline {
             }
             steps {
                 echo  'hello'
-                enforceTrustedApproval("candlepin","${GITHUB_TOKEN}")
+
+                enforceTrustedApproval("candlepin","sdhome-github-app")
             }
         }
         stage('Test') {
