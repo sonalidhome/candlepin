@@ -10,12 +10,8 @@ pipeline {
     }
     stages {
         stage('Trust') {
-            environment {
-                GITHUB_TOKEN = credentials('sdhome-github-app')
-            }
             steps {
                 echo  'hello'
-
                 enforceTrustedApproval("candlepin","sdhome-github-app")
             }
         }
@@ -23,7 +19,7 @@ pipeline {
             parallel {
                 stage('unit') {
                     // ensures that this stage will get assigned its own workspace
-                    agent { label 'docker' }
+                    agent any
                     steps {
                         sh 'sudo chown -R jenkins:jenkins $WORKSPACE'
                         checkout scm
@@ -31,7 +27,7 @@ pipeline {
                     }
                 }
                 stage('checkstyle') {
-                    agent { label 'docker' }
+                    agent any
                     steps {
                         sh 'sudo chown -R jenkins:jenkins $WORKSPACE'
                         checkout scm
@@ -39,7 +35,7 @@ pipeline {
                     }
                 }
                 stage('rspec-postgresql') {
-                    agent { label 'docker' }
+                    agent any
                     environment {
                         CANDLEPIN_DATABASE = 'postgresql'
                         CP_TEST_ARGS = '-r'
@@ -51,7 +47,7 @@ pipeline {
                     }
                 }
                 stage('rspec-mysql') {
-                    agent { label 'docker' }
+                    agent any
                     environment {
                         CANDLEPIN_DATABASE = 'mysql'
                         CP_TEST_ARGS = '-r'
@@ -63,7 +59,7 @@ pipeline {
                     }
                 }
                 stage('rspec-postgres-hosted') {
-                    agent { label 'docker' }
+                    agent any
                     environment {
                         CANDLEPIN_DATABASE = 'postgresql'
                         CP_TEST_ARGS = '-H'
@@ -75,7 +71,7 @@ pipeline {
                     }
                 }
                 stage('rspec-mysql-hosted') {
-                    agent { label 'docker' }
+                    agent any
                     environment {
                         CANDLEPIN_DATABASE = 'mysql'
                         CP_TEST_ARGS = '-H'
@@ -87,7 +83,7 @@ pipeline {
                     }
                 }
                 stage('rspec-qpid') {
-                    agent { label 'docker' }
+                    agent any
                     environment {
                         CANDLEPIN_DATABASE = 'postgresql'
                         CP_TEST_ARGS = '-q -r qpid_spec'
@@ -109,7 +105,7 @@ pipeline {
                     }
                 }
                 stage('validate-translation') {
-                    agent { label 'docker' }
+                    agent any
                     steps {
                         sh 'sudo chown -R jenkins:jenkins $WORKSPACE'
                         checkout scm
