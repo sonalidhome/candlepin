@@ -11,11 +11,11 @@ pipeline {
     stages {
         stage('Trust') {
             environment {
-                GITHUB_TOKEN = credentials('github-api-token-as-username-password')
+                GITHUB_TOKEN = credentials('sdhome-github-app')
             }
             steps {
                 echo  'hello'
-                //enforceTrustedApproval("candlepin","${GITHUB_TOKEN}")
+                enforceTrustedApproval("candlepin","${GITHUB_TOKEN}")
             }
         }
         stage('Test') {
