@@ -12,7 +12,7 @@ pipeline {
         stage('Trust') {
             steps {
                 echo  'hello'
-                enforceTrustedApproval("sdhome/candlepin","sdhome-github-app")
+                enforceTrustedApproval("sonalidhome/candlepin","sdhome-github-app")
             }
         }
         stage('Test') {
