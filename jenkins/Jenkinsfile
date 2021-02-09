@@ -15,6 +15,9 @@ pipeline {
             }
         }
         stage('Test') {
+            environment {
+                CANDLEPIN_QUAY_BOT = credentials("candlepin-quay-bot")
+            }
             parallel {
                 stage('unit') {
                     // ensures that this stage will get assigned its own workspace
